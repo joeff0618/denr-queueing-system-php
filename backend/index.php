@@ -141,7 +141,7 @@ function reset_past_cards(PDO $pdo): void
     $stmt = $pdo->prepare(
         "UPDATE queueing_queue_items
          SET queue_no = NULL
-         WHERE LOWER(status) IN ('pending', 'processing')
+         WHERE LOWER(status) IN ('pending', 'processing', 'forwarded')
            AND created_at < ?
            AND queue_no IS NOT NULL"
     );
@@ -335,7 +335,7 @@ try {
         }
 
         if ($method === 'GET' && $action === 'available-cards') {
-            $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items WHERE LOWER(status) IN ('pending', 'processing') AND queue_no IS NOT NULL");
+            $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items WHERE LOWER(status) IN ('pending', 'processing', 'forwarded') AND queue_no IS NOT NULL");
             $used = array_map('intval', array_column($stmt->fetchAll(), 'queue_no'));
             $all = range(1, (int) $config['max_available_cards']);
             respond(['available_cards' => array_values(array_diff($all, $used))]);
@@ -344,7 +344,7 @@ try {
         if ($method === 'POST' && $action === 'add') {
             $body = json_body();
             $queueNo = (int) ($body['queue_no'] ?? 0);
-            $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items WHERE LOWER(status) IN ('pending', 'processing') AND queue_no IS NOT NULL");
+            $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items WHERE LOWER(status) IN ('pending', 'processing', 'forwarded') AND queue_no IS NOT NULL");
             $used = array_map('intval', array_column($stmt->fetchAll(), 'queue_no'));
             if (!in_array($queueNo, range(1, (int) $config['max_available_cards']), true) || in_array($queueNo, $used, true)) {
                 fail(400, "Card #$queueNo is currently in use");
