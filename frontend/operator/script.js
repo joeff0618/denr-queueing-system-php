@@ -806,7 +806,7 @@ async function flashSelected() {
         if(!item) return;
 
         if (item.status.toLowerCase() !== "pending") {
-            alert(`This entry is already ${item.status}. You can only flash pending entries.`);
+            alert("Status must be PENDING to change to PROCESSING");
             return;
         }
 
@@ -916,7 +916,7 @@ async function skip(status) {
         }
 
         if (item.status.toLowerCase() !== "processing") {
-            alert("You can only skip items that are currently processing.");
+            alert("Status must be PROCESSING to change to PENDING");
             return;
         }
 
@@ -955,9 +955,19 @@ async function updateCurrent(status) {
             return;
         }
 
-        if (item.status.toLowerCase() !== "processing") {
-            alert("You can only update status for items that are currently processing.");
-            return;
+        const itemStatus = item.status.toLowerCase();
+        const targetStatus = status.toLowerCase();
+
+        if (targetStatus === "forwarded") {
+            if (itemStatus !== "processing" && itemStatus !== "pending") {
+                alert("Status must be PROCESSING or PENDING to change to FORWARDED");
+                return;
+            }
+        } else if (targetStatus === "completed") {
+            if (itemStatus !== "processing" && itemStatus !== "pending") {
+                alert("Status must be PROCESSING or PENDING to change to COMPLETED");
+                return;
+            }
         }
 
         const response = await fetch(`${API_BASE}/status/${item.id}`, {
