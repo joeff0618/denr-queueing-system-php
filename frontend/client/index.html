@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DENR Queueing System - Client</title>
+    <meta name="description" content="Login to the DENR Queueing System portal">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../client/style.css">
+    <script src="../client/script.js" defer></script>
+    <link rel="icon" href="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" type="image/x-icon">
+</head>
+<body id="clientPage">
+    <div class="entry-wrapper">
+        <div class="entry-container glass-effect">
+            <div class="entry-header">
+                <img src="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" alt="DENR Logo" class="logo" />
+                <h2>Welcome to DENR</h2>
+                <p>Please enter your information to get a queue ticket</p>
+            </div>
+            <form id="entryForm" class="entry-form">
+                <div class="input-group">
+                    <label for="nameField">Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-user"></i>
+                        <input id="nameField" name="name" placeholder="Enter your full name" required maxlength="40">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="purposeField">Purpose of Visit</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-chat-centered-text"></i>
+                        <textarea id="purposeField" name="purpose" placeholder="Enter your purpose for visit" 
+                            required maxlength="100"></textarea>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <label class="button-label">
+                        Please select if any of these apply to you:
+                    </label>
+
+                    <div class="priority-options">
+                        <button type="button" class="priority-btn" data-value="senior">
+                            <i class="ph ph-identification-card"></i>
+                            <span>Senior Citizen</span>
+                        </button>
+                        <button type="button" class="priority-btn" data-value="pwd">
+                            <i class="ph ph-wheelchair"></i>
+                            <span>PWD</span>
+                        </button>
+                        <button type="button" class="priority-btn" data-value="mother">
+                            <i class="ph ph-baby"></i>
+                            <span>Pregnant</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="enter-btn">
+                    <span>Generate Ticket</span>
+                    <i class="ph ph-ticket"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOM MODAL DIALOG -->
+    <div id="customModal" class="custom-modal-overlay">
+        <div class="custom-modal-content">
+            <div class="modal-icon-container" id="modalIconContainer">
+                <i class="ph ph-check-circle" id="modalIcon"></i>
+            </div>
+            <h3 id="modalTitle">Success</h3>
+            <p id="modalMessage">Your ticket has been generated.</p>
+            <button type="button" class="modal-close-btn" id="modalCloseBtn">OK</button>
+        </div>
+    </div>
+</body>
+</html>

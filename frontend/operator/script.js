@@ -1,0 +1,1632 @@
+const API_BASE = "../api/queue";
+
+let selectedEntryId = null;
+let allQueueData = [];
+let filteredQueueData = [];
+let operatorSortKey = "queue_order";
+let operatorSortDirection = "asc";
+
+let allUserData = [];
+let filteredUserData = [];
+let userSortKey = "id";
+let userSortDirection = "asc";
+let userCurrentPage = 1;
+let userRowsPerPage = 6;
+let selectedUserId = null;
+
+let userDivision = localStorage.getItem("userDiv");
+
+(async function() {                                                                                                           
+            try {                                                                                                                     
+                const response = await fetch("../api/auth/profile");                                                                    
+                if (!response.ok) {                                                                                                   
+                    // If unauthorized (e.g. 401), redirect back to login                                                             
+                    window.location.replace("../login/auth.html");                                                                      
+                    return;                                                                                                           
+                }                                                                                                                     
+                const data = await response.json();                                                                                   
+                                                                                                                                      
+                // Check if the user is an operator (division: lobby)                                                               
+                if (data.division !== "lobby" && data.division !== "sadmin") {                                                                                    
+                    // If not, redirect them to their designated monitoring page                                                      
+                    window.location.replace("../monitoring/index.html");                                                                
+                    return;                                                                                                           
+                }                                                                                                                     
+                                                                                                                                      
+                // If they are authorized, make the page contents visible                                                             
+                document.documentElement.style.display = "block";                                                                     
+            } catch (e) {                                                                                                             
+                window.location.replace("../login/auth.html");                                                                          
+            }
+        })();
+
+/* ================= PAGE SWITCH ================= */
+
+function showPage(id) {
+    document.querySelectorAll(".page")
+        .forEach(p => p.classList.remove("active"));
+
+    document.getElementById(id).classList.add("active");
+    clearSelection();
+    if (id === "userPage") {
+        loadUsers();
+    } else {
+        loadQueue();
+    }
+}
+
+/* ================= INITIAL LOAD ================= */
+
+loadQueue();
+loadStatistics("today");
+
+/* ================= VALIDATE ENTRY ==============*/
+function validateForm(clientFieldId, purposeFieldId) {
+    const clientField = document.getElementById(clientFieldId);
+    const purposeField = document.getElementById(purposeFieldId);
+
+    const isEditForm = clientFieldId.startsWith("fullEdit");
+    const clientError = document.getElementById(isEditForm ? "editClientError" : "clientError");
+    const purposeError = document.getElementById(isEditForm ? "editPurposeError" : "purposeError");
+
+    let isValid = true;
+
+    if (clientError) clientError.textContent = "";
+    if (purposeError) purposeError.textContent = "";
+
+    clientField.classList.remove("input-error");
+    purposeField.classList.remove("input-error");
+
+    if (!clientField.value.trim()) {
+        if (clientError) clientError.textContent = "Please enter a client name.";
+        clientField.classList.add("input-error");
+        isValid = false;
+    }
+
+    if (!purposeField.value.trim()) {
+        if (purposeError) purposeError.textContent = "Please enter a purpose.";
+        purposeField.classList.add("input-error");
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+/* ================= ADD AND EDIT ENTRY DATA ================= */
+let modalMode = "add";
+
+/* OPEN ADD */
+function add() {
+    modalMode = "add";
+
+    document.getElementById("modalTitle").textContent = "Add Entry";
+    document.getElementById("submitBtn").textContent = "Save";
+    document.getElementById("entryForm").reset();
+    document.getElementById("entryId").value = "";
+
+    togglePriorityOptions();
+    document.getElementById("entryModal").style.display = "flex";
+    toggleClearButton(document.getElementById("clientName"));
+    toggleClearButton(document.getElementById("purpose"));
+}
+
+/* OPEN EDIT */
+async function openSelectedEdit() {
+    if (!selectedEntryId) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/today`);
+        const queue = await response.json();
+        const item = queue.find(q => q.id === selectedEntryId);
+
+        if (!item) return;
+
+        modalMode = "edit";
+
+        document.getElementById("modalTitle").textContent = "Edit Entry";
+        document.getElementById("submitBtn").textContent = "Save Changes";
+        document.getElementById("entryId").value = item.id;
+        document.getElementById("clientName").value = item.client_name.trim();
+        document.getElementById("purpose").value = item.purpose.trim();
+        document.getElementById("division").value = item.division;
+        document.getElementById("priority").value = item.priority !== "regular" ? "true" : "false";
+        if (item.priority !== "regular") {
+            document.getElementById("priorityType").value = item.priority;
+        }
+
+        toggleClearButton(document.getElementById("clientName"));
+        toggleClearButton(document.getElementById("purpose"));
+        togglePriorityOptions();
+        document.getElementById("entryModal").style.display = "flex";
+
+    } catch (error) {
+        console.error("Error fetching item:", error);
+    }
+}
+
+/* SUBMIT */
+
+document.getElementById("entryForm")
+.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    if (!validateForm("clientName", "purpose")) {
+        return;
+    }
+
+    let priorityType;
+    const id = document.getElementById("entryId").value;
+    
+    if (document.getElementById("priority").value === "true") {
+        priorityType = document.getElementById("priorityType").value;
+    } else {
+        priorityType = "regular";
+    }
+
+    const payload = {
+        client_name: document.getElementById("clientName").value.trim(),
+        purpose: document.getElementById("purpose").value.trim(),
+        division: document.getElementById("division").value,
+        priority: priorityType
+    };
+
+    /* ================= ADD ================= */
+    try {
+        if (modalMode === "add") {
+            const cardsRes = await fetch(`${API_BASE}/available-cards`);
+            const cardsData = await cardsRes.json();
+
+            if (cardsData.available_cards.length === 0) {
+                alert( "No cards available! All 20 cards are currently in use." );
+                return;
+            }
+
+            payload.queue_no = cardsData.available_cards[0];
+            const response = await fetch(`${API_BASE}/add`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert("Error: " + errorData.detail);
+                return;
+            }
+
+            const newItem = await response.json();
+            alert( `Card #${newItem.queue_no} assigned to ${newItem.client_name}` );
+        }
+
+    /* ================= EDIT ================= */
+        else {
+            const response = await fetch(`${API_BASE}/edit/${id}`, {
+                    method: "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert("Error: " + errorData.detail);
+                return;
+            }
+        }
+
+        closeModal('entryModal');
+        loadQueue();
+        clearSelection();
+    } catch (error) {
+        console.error(error);
+        alert("Failed to connect to the server.");
+    }
+});
+
+/* PRIORITY */
+const prioritySelect = document.getElementById("priority");
+const priorityOptions = document.getElementById("priorityOptions");
+
+function togglePriorityOptions() {
+    priorityOptions.style.display = prioritySelect.value === "true" ? "block" : "none";
+}
+
+prioritySelect.addEventListener( "change", togglePriorityOptions );
+const buttons = document.querySelectorAll('.priority-btn');
+const priorityInput = document.getElementById('priorityType');
+
+buttons.forEach(button => {
+    button.addEventListener('click', () => {
+        buttons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        priorityInput.value = button.dataset.value;
+    });
+});
+
+/* UTILITIES (MODALS) */
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = "flex";
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = "none";
+}
+
+function toggleClearButton(input) {
+    const clearBtn = input.parentElement.querySelector(".clear-btn");
+
+    if (clearBtn) {
+        clearBtn.classList.toggle("visible", input.value.trim() !== "");
+    }
+}
+
+function clearField(fieldId) {
+    const field = document.getElementById(fieldId);
+
+    if (field.tagName === "SELECT") {
+        field.selectedIndex = 0;
+    } else {
+        field.value = "";
+    }
+
+    toggleClearButton(field);
+}
+
+/* ================= ANNOUNCEMENT ================= */
+async function saveAnnouncement() {
+    const text = document.getElementById("messageText").value;
+    try {
+        const response = await fetch(`${API_BASE}/announcement`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.detail || "Failed to update announcement"));
+            return;
+        }
+        
+        closeModal("announcementModal");
+    } catch (error) {
+        console.error("Error saving announcement:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+/* ================= VIEW STATISTICS ================= */
+// Chart.js instance
+let statsChart = null;
+
+function openStatsModal() {
+    loadStatistics("today");
+    document.getElementById("statsModal").style.display = "flex";
+}
+
+// Load statistics based on selected range
+async function loadStatistics(period = "today") {
+    try {
+        const url = `${API_BASE}/statistics/completed?range=${period}&div=${userDivision}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        renderChart(data.data);
+        renderStatsTable(data.data);
+    } catch (error) {
+        console.error("Error loading statistics:", error);
+    }
+}
+
+function renderChart(data) {
+    const tooltip = document.getElementById("chartTooltip");
+    const chart = document.getElementById("statsChart");
+    chart.innerHTML = "";
+    const maxCount = Math.max( ...data.map(item => item.completed + item.cancelled + item.pending), 1 );
+
+    data.forEach(item => {
+        const total = item.completed + item.cancelled + item.pending;
+        const container = document.createElement("div");
+        container.className = "chart-bar-container";
+
+        const value = document.createElement("div");
+        value.className = "chart-value";
+        value.textContent = total;
+
+        const stack = document.createElement("div");
+        stack.className = "chart-stack";
+
+        const completedBar = document.createElement("div");
+        completedBar.className = "chart-bar completed-bar";
+        completedBar.style.height = `${(item.completed / maxCount) * 250}px`;
+
+        completedBar.addEventListener("mousemove", e => {
+            let html = `<strong>Completed</strong><br>`;
+
+            Object.entries(item.completed_divisions || {})
+                .forEach(([div, count]) => {
+                    html += `${div.toUpperCase()}: ${count}<br>`;
+                });
+
+            tooltip.innerHTML = html;
+            tooltip.style.left = `${e.clientX + 15}px`;
+            tooltip.style.top = `${e.clientY + 15}px`;
+            tooltip.style.display = "block";
+        });
+
+        completedBar.addEventListener("mouseleave", () => {
+            tooltip.style.display = "none";
+        });
+
+        const cancelledBar = document.createElement("div");
+        cancelledBar.className = "chart-bar cancelled-bar";
+        cancelledBar.style.height = `${(item.cancelled / maxCount) * 250}px`;
+
+        cancelledBar.addEventListener("mousemove", e => {
+            let html = `<strong>Cancelled</strong><br>`;
+
+            Object.entries(item.cancelled_divisions || {})
+                .forEach(([div, count]) => {
+                    html += `${div.toUpperCase()}: ${count}<br>`;
+                });
+
+            tooltip.innerHTML = html;
+            tooltip.style.left = `${e.clientX + 15}px`;
+            tooltip.style.top = `${e.clientY + 15}px`;
+            tooltip.style.display = "block";
+        });
+
+        cancelledBar.addEventListener("mouseleave", () => {
+            tooltip.style.display = "none";
+        });
+
+        const pendingBar = document.createElement("div");
+        pendingBar.className = "chart-bar pending-bar";
+        pendingBar.style.height = `${(item.pending / maxCount) * 250}px`;
+
+        pendingBar.addEventListener("mousemove", e => {
+            let html = `<strong>Pending</strong><br>`;
+
+            Object.entries(item.pending_divisions || {})
+                .forEach(([div, count]) => {
+                    html += `${div.toUpperCase()}: ${count}<br>`;
+                });
+
+            tooltip.innerHTML = html;
+            tooltip.style.left = `${e.clientX + 15}px`;
+            tooltip.style.top = `${e.clientY + 15}px`;
+            tooltip.style.display = "block";
+        });
+
+        pendingBar.addEventListener("mouseleave", () => {
+            tooltip.style.display = "none";
+        });
+
+        stack.appendChild(pendingBar);
+        stack.appendChild(cancelledBar);
+        stack.appendChild(completedBar);
+
+        const label = document.createElement("div");
+        label.className = "chart-label";
+        label.textContent = formatLabel(item.date, currentRange);
+
+        container.appendChild(value);
+        container.appendChild(stack);
+        container.appendChild(label);
+
+        chart.appendChild(container);
+    });
+}
+
+function renderStatsTable(data) {
+    const tbody = document.getElementById("statsTableBody");
+    const completed = data.reduce( (total, item) => total + item.completed, 0 );
+    const cancelled = data.reduce( (total, item) => total + item.cancelled, 0 );
+    const pending = data.reduce( (total, item) => total + item.pending, 0 );
+    tbody.innerHTML = `
+        <tr>
+            <td><span style="color:#22c55e;font-weight:600">Completed</span></td>
+            <td>${completed}</td>
+        </tr>
+        <tr>
+            <td><span style="color:#ef4444;font-weight:600">Cancelled</span></td>
+            <td>${cancelled}</td>
+        </tr>
+        <tr>
+            <td><span style="color:#FFE5B4;font-weight:600">Pending</span></td>
+            <td>${pending}</td>
+        </tr>
+    `;
+}
+
+function formatLabel(dateStr, range) {
+    if (range === "today" || range === "yesterday") {
+        return dateStr;
+    }
+
+    const d = new Date(dateStr);
+    if (range === "7days" || range === "month") {
+        return d.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric"
+        });
+    }
+
+    if (range === "year") {
+        return d.toLocaleDateString("en-US", {
+            month: "short"
+        });
+    }
+
+    return dateStr;
+}
+
+// Filter buttons
+let currentRange = "today";
+const filterButtons = document.querySelectorAll(".filter-btn");
+
+filterButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+        currentRange = btn.dataset.range;
+        filterButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        loadStatistics(currentRange);
+    });
+});
+
+/* ================= LOAD QUEUE ================= */
+
+async function loadQueue(){
+    try {
+        const response = await fetch(`${API_BASE}/today`);
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        }
+
+        const queue = await response.json();
+        if (!Array.isArray(queue)) {
+            throw new Error("Queue API returned an unexpected response.");
+        }
+
+        allQueueData = queue;
+        updateOperatorDashboard();
+        updateOperatorLastUpdated();
+        applyQueueFilters();
+        applyDepartmentAccess()
+
+    } catch (error) {
+        console.error("Error loading queue:", error);
+        renderQueueError("Failed to load queue data.");
+        updateOperatorLastUpdated("Unable to sync");
+    }
+}
+
+/* TABLE FILTERS */
+function filterTable(){
+    const userPageEl = document.getElementById("userPage");
+    if (userPageEl && userPageEl.classList.contains("active")) {
+        applyUserFilters();
+    } else {
+        applyQueueFilters();
+    }
+}
+
+function applyQueueFilters() {
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const div = document.getElementById("divisionFilter").value.toLowerCase();
+
+    filteredQueueData = allQueueData.filter(item => {
+        const text = `${item.id} ${item.queue_no} ${item.client_name} ${item.purpose} ${item.division} ${item.status}`.toLowerCase();
+        const matchSearch = !search || text.includes(search);
+        const matchDiv = !div || item.division.toLowerCase() === div;
+
+        return matchSearch && matchDiv;
+    });
+
+    sortFilteredQueue();
+    renderQueueTable();
+}
+
+function sortQueueBy(key) {
+    const userPageEl = document.getElementById("userPage");
+    if (userPageEl && userPageEl.classList.contains("active")) {
+        sortUsersBy(key);
+    } else {
+        if (operatorSortKey === key) {
+            operatorSortDirection = operatorSortDirection === "asc" ? "desc" : "asc";
+        } else {
+            operatorSortKey = key;
+            operatorSortDirection = "asc";
+        }
+
+        sortFilteredQueue();
+        renderQueueTable();
+    }
+}
+
+function sortFilteredQueue() {
+    filteredQueueData.sort((a, b) => {
+        const aProcessing = a.status === "processing";
+        const bProcessing = b.status === "processing";
+
+        if (aProcessing && !bProcessing) return -1;
+        if (!aProcessing && bProcessing) return 1;
+
+        let valA;
+        let valB;
+
+        if (operatorSortKey === "queue_order") {
+            return compareQueueOrder(a, b);
+        }
+
+        if (operatorSortKey === "priority") {
+            valA = a.priority !== "regular" ? 1 : 0;
+            valB = b.priority !== "regular" ? 1 : 0;
+        } else if (operatorSortKey === "created_at") {
+            valA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            valB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        } else if (["client_name", "purpose", "division", "status"].includes(operatorSortKey)) {
+            valA = (a[operatorSortKey] || "").toLowerCase();
+            valB = (b[operatorSortKey] || "").toLowerCase();
+        } else {
+            valA = a[operatorSortKey] ?? 0;
+            valB = b[operatorSortKey] ?? 0;
+        }
+
+        if (valA < valB) return operatorSortDirection === "asc" ? -1 : 1;
+        if (valA > valB) return operatorSortDirection === "asc" ? 1 : -1;
+        return compareQueueOrder(a, b);
+    });
+}
+
+function compareQueueOrder(a, b) {
+    const aDone = ["completed", "cancelled"].includes(a.status);
+    const bDone = ["completed", "cancelled"].includes(b.status);
+
+    if (aDone && !bDone) return 1;
+    if (!aDone && bDone) return -1;
+
+    // Sort by effective_priority score descending (higher score served first)
+    const aScore = a.effective_priority ?? 0;
+    const bScore = b.effective_priority ?? 0;
+    if (bScore !== aScore) return bScore - aScore;
+
+    // Tie-breaker: earliest created_at first
+    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return aTime - bTime;
+}
+
+function renderQueueTable() {
+    const body = document.getElementById("queueBody");
+    body.innerHTML = "";
+
+    if (filteredQueueData.length === 0) {
+        body.innerHTML = `
+            <tr>
+                <td colspan="10" class="empty-state">No queue entries found.</td>
+            </tr>
+        `;
+        updateOperatorSortIcons();
+        return;
+    }
+
+    filteredQueueData.forEach(item => {
+        const divClass = item.division.toLowerCase().replace(/\s/g,'');
+        const statusClass = `status-${item.status.toLowerCase()}`;
+        const isPriority = item.priority !== "regular";
+        const priorityClass = isPriority ? "priority-badge is-priority" : "priority-badge";
+        const isSelected = selectedEntryId === item.id;
+        const scoreDisplay = item.effective_priority != null ? item.effective_priority.toFixed(1) : "-";
+
+        body.innerHTML += `
+        <tr class="${isPriority ? "priority-row" : ""} ${isSelected ? "selected" : ""}" onclick="selectRow(${item.id}, this)">
+            <td></td>
+            <td><span class="queue-number-pill">${item.queue_no}</span></td>
+            <td>${escapeHtml(item.client_name)}</td>
+            <td>${escapeHtml(item.purpose)}</td>
+            <td><span class="div-badge ${divClass}">${escapeHtml(item.division.toUpperCase())}</span></td>
+            <td><span class="status-badge ${statusClass}">${escapeHtml(item.status.toUpperCase())}</span></td>
+            <td><span class="${priorityClass}">${isPriority ? "Priority" : "Regular"}</span></td>
+            <td>${formatOperatorTime(item)}</td>
+            <td>
+                <button class="update-btn"
+                    onclick="event.stopPropagation(); updateEntry(${item.id})">
+                    Update
+                </button>
+            </td>
+        </tr>
+        `;
+    });
+
+    document.querySelectorAll(".table-shell tbody tr").forEach((row, index) => {
+        row.cells[0].textContent = index + 1;
+    });
+
+    updateOperatorSortIcons();
+}
+
+function renderQueueError(message) {
+    document.getElementById("queueBody").innerHTML = `
+        <tr>
+            <td colspan="10" class="empty-state">${message}</td>
+        </tr>
+    `;
+}
+
+function updateOperatorSortIcons() {
+    document.querySelectorAll(".sort-icon").forEach(icon => {
+        icon.className = "sort-icon";
+    });
+
+    document.querySelectorAll("th.sortable").forEach(th => {
+        th.classList.remove("active-asc", "active-desc");
+    });
+
+    if (operatorSortKey === "queue_order") return;
+
+    const activeIcon = document.getElementById(`sort-icon-${operatorSortKey}`);
+    if (activeIcon) activeIcon.classList.add(operatorSortDirection);
+
+    const activeHeader = document.querySelector(`th[data-key="${operatorSortKey}"]`);
+    if (activeHeader) activeHeader.classList.add(`active-${operatorSortDirection}`);
+}
+
+function updateOperatorDashboard() {
+    const processingItem = allQueueData.find(item => item.status.toLowerCase() === "processing");
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+
+    setText("currentQNo", processingItem ? processingItem.queue_no : "-");
+    setText("dashNowServing", processingItem ? `#${processingItem.queue_no}` : "-");
+    setText("dashPending", allQueueData.filter(item => item.status === "pending").length);
+    setText("dashForwarded", allQueueData.filter(item => item.status === "forwarded").length);
+    setText("dashCompleted", allQueueData.filter(item => item.status === "completed").length);
+    setText("dashCancelled", allQueueData.filter(item => item.status === "cancelled").length);
+    setText("dashPriority", allQueueData.filter(item => item.priority !== "regular" && 
+        item.status !== "completed" && item.status !== "cancelled").length);
+}
+
+function updateOperatorLastUpdated(message = null) {
+    const el = document.getElementById("operatorLastUpdated");
+    if (!el) return;
+
+    if (message) {
+        el.textContent = message;
+        return;
+    }
+
+    el.textContent = `${new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+    })}`;
+}
+
+function formatOperatorTime(item) {
+    if (item.status.toLowerCase() === "completed" || 
+        item.status.toLowerCase() === "cancelled" && item.completed_at) {
+        const start = new Date(item.created_at);
+        const end = new Date(item.completed_at);
+        const diffMs = Math.max(0, end - start);
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffSecs = Math.floor((diffMs % 60000) / 1000);
+        return `${diffMins}m ${diffSecs}s`;
+    }
+
+    return new Date(item.created_at).toLocaleString();
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+/* ================= UPDATE ENTRY ================= */
+
+async function updateEntry(id){
+    document.getElementById("editNo").value = id;
+    document.getElementById("updateModal").style.display = "flex";
+}
+
+document.querySelectorAll(".status-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("updateStatus").value = btn.dataset.status;
+    });
+});
+
+async function saveStatusUpdate(){
+    const id = parseInt(document.getElementById("editNo").value);
+    const newStatus = document.getElementById("updateStatus").value;
+
+    try {
+        const response = await fetch(`${API_BASE}/status/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + errorData.detail);
+            return;
+        }
+
+        closeModal('updateModal');
+        loadQueue();
+
+    } catch (error) {
+        console.error("Error updating status:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+/* ================= ROW SELECTION ================= */
+
+function selectRow(id, rowElement){
+    document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+    rowElement.classList.add("selected");
+    selectedEntryId = id;
+    document.getElementById("flashSelectedBtn").classList.add("show");
+    document.getElementById("editSelectedBtn").classList.add("show");
+    document.getElementById("deleteSelectedBtn").classList.add("show");
+}
+
+function clearSelection(){
+    selectedEntryId = null;
+    document.getElementById("flashSelectedBtn").classList.remove("show");
+    document.getElementById("editSelectedBtn").classList.remove("show");
+    document.getElementById("deleteSelectedBtn").classList.remove("show");
+    document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+}
+
+async function flashSelected() {
+    if(!selectedEntryId) return;
+    try {
+        // Check if someone is already being processed
+        const todayRes = await fetch(`${API_BASE}/today`);
+        const queue = await todayRes.json();
+
+        const alreadyProcessing = queue.find(q => q.status.toLowerCase() === "processing");
+        if (alreadyProcessing) {
+            alert(`Card #${alreadyProcessing.queue_no} is still being processed. Please complete or cancel it first.`);
+            return;
+        }
+
+        const item = queue.find(q => q.id === selectedEntryId);
+        if(!item) return;
+
+        if (item.status.toLowerCase() !== "pending") {
+            alert(`This entry is already ${item.status}. You can only flash pending entries.`);
+            return;
+        }
+
+        await fetch(`${API_BASE}/status/${item.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({status: "processing"})
+        });
+
+        await loadQueue();
+        clearSelection();
+    } catch (error) {
+        console.error("Error fetching item:", error);
+    }
+}
+
+document.addEventListener("click", function(e){
+    const isRow = e.target.closest("tr");
+    const isSidebar = e.target.closest(".sidebar");
+    const isModal = e.target.closest(".modal");
+    const isPagination = e.target.closest(".pagination");
+
+    if(!isRow && !isSidebar && !isModal && !isPagination){
+        clearSelection();
+        clearUserSelection();
+    }
+});
+
+async function deleteSelected(){
+    try {
+        const response = await fetch(`${API_BASE}/today`);
+        const queue = await response.json();
+        const item = queue.find(q => q.id === selectedEntryId);
+
+        if(!item) return;
+
+        document.getElementById("deleteModal").style.display = "flex";
+    } catch (error) {
+        console.error("Error fetching item:", error);
+    }
+}
+
+async function deleteEntry(){
+    const deletedId = selectedEntryId;
+    try {
+        const response = await fetch(`${API_BASE}/items/${deletedId}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + errorData.detail);
+            return;
+        }
+
+        closeModal('deleteModal');
+        loadQueue();
+        clearSelection();
+    } catch (error) {
+        console.error("Error deleting entry:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+async function logout(){
+    try {
+        const response = await fetch(`../api/auth/logout`, {
+            method: "POST"
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + errorData.detail);
+            window.location.reload();
+            return;
+        }
+
+        localStorage.removeItem("userDiv");
+        localStorage.removeItem("userId");
+        window.location.replace("../login/auth.html");
+    } catch (error) {
+        console.error("Error logging out:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+/* COLLAPSING SIDEBAR */
+const sidebar = document.querySelector(".sidebar");
+const toggleBtn = document.getElementById("sidebarToggle");
+toggleBtn.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+});
+
+/* =========== PANEL BUTTONS ============= */
+async function callNext() {
+    try {
+        // Check if someone is already being processed
+        const todayRes = await fetch(`${API_BASE}/today`);
+        const queue = await todayRes.json();
+        const alreadyProcessing = queue.find(q => q.status.toLowerCase() === "processing");
+        if (alreadyProcessing) {
+            alert(`Card #${alreadyProcessing.queue_no} is still being processed. Please complete or cancel it first.`);
+            return;
+        }
+
+        const response = await fetch(`${API_BASE}/call-next`, {
+            method: "PUT"
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(errorData.detail || "No pending items in the queue.");
+            return;
+        }
+
+        const nextEntry = await response.json();
+        document.getElementById("currentQNo").textContent = nextEntry.queue_no;
+        await loadQueue();
+    } catch (error) {
+        console.error("Error calling next queue:", error);
+    }
+}
+
+async function skip(status) {
+     try {
+        // Use the atomic skip-and-call-next endpoint so the skipped person
+        // is excluded from the next selection.
+        const response = await fetch(`${API_BASE}/skip-and-call-next`, {
+            method: "PUT"
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(errorData.detail || "No entry is currently being processed.");
+            return;
+        }
+
+        const result = await response.json();
+
+        if (result.queue_no) {
+            // A next person was found and is now processing
+            document.getElementById("currentQNo").textContent = result.queue_no;
+        } else {
+            // Skipped but no one else is waiting
+            document.getElementById("currentQNo").textContent = "-";
+            alert(result.detail || "Skipped, but no one else is waiting.");
+        }
+
+        await loadQueue();
+    } catch (error) {
+        console.error("Error skipping queue:", error);
+    }   
+}
+
+async function updateCurrent(status) {
+    try {
+        const response = await fetch(`${API_BASE}/today`);
+        const queue = await response.json();
+        const current = queue.find(item => item.status.toLowerCase() === "processing");
+
+        if (!current) {
+            alert("No entry is currently being processed.");
+            return;
+        }
+
+        await fetch(`${API_BASE}/status/${current.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: status })
+        });
+
+        document.getElementById("currentQNo").textContent = "-";
+        await loadQueue();
+    } catch (error) {
+        console.error(`Error setting status to ${status}:`, error);
+    }
+}
+
+/* ================= USER LIST LOGIC ================= */
+
+function getUserPageElements() {
+    const root = document.getElementById("userPage");
+    if (!root) return {};
+    
+    return {
+        lastUpdated: document.getElementById("userLastUpdated") || root.querySelector("#operatorLastUpdated"),
+        totalUsers: document.getElementById("dashTotalUsers"),
+        onlineUsers: document.getElementById("dashOnlineUsers"),
+        searchInput: document.getElementById("userSearchInput") || root.querySelector("#searchInput"),
+        divFilter: document.getElementById("userDivisionFilter") || root.querySelector("#divisionFilter"),
+        tableBody: document.getElementById("userListBody") || root.querySelector("#queueBody"),
+        table: document.getElementById("userTable") || root.querySelector("table")
+    };
+}
+
+async function loadUsers(resetPage = true) {
+    try {
+        const response = await fetch("../api/auth/users");
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        }
+
+        const users = await response.json();
+        if (!Array.isArray(users)) {
+            throw new Error("Users API returned an unexpected response.");
+        }
+
+        allUserData = users;
+        updateUserDashboard();
+        updateUserLastUpdated();
+        applyUserFilters(resetPage);
+    } catch (error) {
+        console.error("Error loading users:", error);
+        renderUsersError("Failed to load user list.");
+        updateUserLastUpdated("Unable to sync");
+    }
+}
+
+function updateUserDashboard() {
+    const els = getUserPageElements();
+    const onlineUserCount = allUserData.filter(user => user.status === "online").length;
+    if (els.totalUsers) {
+        els.totalUsers.textContent = allUserData.length;
+        els.onlineUsers.textContent = onlineUserCount;
+    }
+}
+
+function updateUserLastUpdated(message = null) {
+    const els = getUserPageElements();
+    if (!els.lastUpdated) return;
+
+    if (message) {
+        els.lastUpdated.textContent = message;
+        return;
+    }
+
+    els.lastUpdated.textContent = `${new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+    })}`;
+}
+
+function filterUsersTable() {
+    applyUserFilters(true);
+}
+
+function applyUserFilters(resetPage = true) {
+    const els = getUserPageElements();
+    if (!els.searchInput || !els.divFilter) return;
+
+    const search = els.searchInput.value.toLowerCase();
+    const div = els.divFilter.value.toLowerCase();
+
+    filteredUserData = allUserData.filter(user => {
+        const text = `${user.id} ${user.name || ''} ${user.email || ''} ${user.division}`.toLowerCase();
+        const matchSearch = !search || text.includes(search);
+        const matchDiv = !div || (user.division && user.division.toLowerCase() === div);
+
+        return matchSearch && matchDiv;
+    });
+
+    if (resetPage) {
+        userCurrentPage = 1;
+    }
+
+    sortFilteredUsers();
+    renderUsersTable();
+}
+
+function sortUsersBy(key) {
+    if (userSortKey === key) {
+        userSortDirection = userSortDirection === "asc" ? "desc" : "asc";
+    } else {
+        userSortKey = key;
+        userSortDirection = "asc";
+    }
+
+    userCurrentPage = 1;
+    sortFilteredUsers();
+    renderUsersTable();
+}
+
+function sortFilteredUsers() {
+    filteredUserData.sort((a, b) => {
+        let valA = a[userSortKey];
+        let valB = b[userSortKey];
+
+        if (userSortKey === "created_at") {
+            valA = valA ? new Date(valA).getTime() : 0;
+            valB = valB ? new Date(valB).getTime() : 0;
+        } else if (typeof valA === "string") {
+            valA = valA.toLowerCase();
+            valB = (valB || "").toLowerCase();
+        } else {
+            valA = valA ?? 0;
+            valB = valB ?? 0;
+        }
+
+        if (valA < valB) return userSortDirection === "asc" ? -1 : 1;
+        if (valA > valB) return userSortDirection === "asc" ? 1 : -1;
+        return a.id - b.id;
+    });
+}
+
+function renderUsersTable() {
+    const els = getUserPageElements();
+    if (!els.tableBody) return;
+    els.tableBody.innerHTML = "";
+
+    const totalItems = filteredUserData.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / userRowsPerPage));
+
+    // Clamp current page
+    if (userCurrentPage > totalPages) userCurrentPage = totalPages;
+    if (userCurrentPage < 1) userCurrentPage = 1;
+
+    const startIdx = (userCurrentPage - 1) * userRowsPerPage;
+    const endIdx = Math.min(startIdx + userRowsPerPage, totalItems);
+    const pageData = filteredUserData.slice(startIdx, endIdx);
+
+    // Update user page pagination controls
+    const pageInfo = document.getElementById("userPageInfo");
+    const prevPageBtn = document.getElementById("userPrevPageBtn");
+    const nextPageBtn = document.getElementById("userNextPageBtn");
+    const totalCount = document.getElementById("userTotalCount");
+
+    if (pageInfo) pageInfo.textContent = `Page ${userCurrentPage} of ${totalPages}`;
+    if (prevPageBtn) prevPageBtn.disabled = userCurrentPage <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = userCurrentPage >= totalPages;
+    if (totalCount) totalCount.textContent = `${totalItems} user${totalItems !== 1 ? 's' : ''}`;
+
+    // Enable/disable edit and delete buttons based on selection presence on the page
+    const editBtn = document.getElementById("editUserBtn");
+    const deleteBtn = document.getElementById("deleteUserBtn");
+    const isAnySelected = selectedUserId !== null && pageData.some(u => u.id === selectedUserId);
+    if (editBtn) editBtn.disabled = !isAnySelected;
+    if (deleteBtn) deleteBtn.disabled = !isAnySelected;
+
+    if (pageData.length === 0) {
+        els.tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-state">No users found.</td>
+            </tr>
+        `;
+        updateUserSortIcons();
+        return;
+    }
+
+    pageData.forEach((user, index) => {
+        const divClass = user.division ? user.division.toLowerCase().replace(/\s/g, '') : 'default';
+        const formattedDate = user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A';
+        const isSelected = selectedUserId === user.id;
+        const status = user.status.toUpperCase();
+        const statusClass = user.status.toLowerCase() === "online" ? "status-online" : "status-offline";
+        const lastSeenDate = user.last_seen ? new Date(user.last_seen).toLocaleString() : 'N/A';
+
+        els.tableBody.innerHTML += `
+        <tr class="${isSelected ? 'selected' : ''}" onclick="selectUserRow(${user.id}, this)">
+            <td>${startIdx + index + 1}</td>
+            <td><span class="status-badge ${statusClass}">${status}</span></td>
+            <td>
+                <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left;">
+                    <span style="font-weight: 600; color: var(--text);">${escapeHtml(user.name || 'N/A')}</span>
+                    <span style="font-size: 0.8rem; color: var(--muted);">${escapeHtml(user.email || 'N/A')}</span>
+                </div>
+            </td>
+            <td><span class="div-badge ${divClass}">${escapeHtml((user.division || 'N/A').toUpperCase())}</span></td>
+            <td>${formattedDate}</td>
+            <td><span style="color: var(--muted); font-size: 0.85rem;">${lastSeenDate}</span></td>
+        </tr>
+        `;
+    });
+
+    updateUserSortIcons();
+}
+
+function renderUsersError(message) {
+    const els = getUserPageElements();
+    if (els.tableBody) {
+        els.tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-state">${message}</td>
+            </tr>
+        `;
+    }
+    const pageInfo = document.getElementById("userPageInfo");
+    const prevPageBtn = document.getElementById("userPrevPageBtn");
+    const nextPageBtn = document.getElementById("userNextPageBtn");
+    const totalCount = document.getElementById("userTotalCount");
+
+    if (pageInfo) pageInfo.textContent = "Page 1 of 1";
+    if (prevPageBtn) prevPageBtn.disabled = true;
+    if (nextPageBtn) nextPageBtn.disabled = true;
+    if (totalCount) totalCount.textContent = "0 users";
+
+    const editBtn = document.getElementById("editUserBtn");
+    const deleteBtn = document.getElementById("deleteUserBtn");
+    if (editBtn) editBtn.disabled = true;
+    if (deleteBtn) deleteBtn.disabled = true;
+}
+
+function updateUserSortIcons() {
+    const els = getUserPageElements();
+    if (!els.table) return;
+
+    els.table.querySelectorAll(".sort-icon").forEach(icon => {
+        icon.className = "sort-icon";
+    });
+
+    els.table.querySelectorAll("th.sortable").forEach(th => {
+        th.classList.remove("active-asc", "active-desc");
+    });
+
+    const activeIcon = document.getElementById(`sort-icon-user-${userSortKey}`) || els.table.querySelector(`#sort-icon-${userSortKey}`);
+    if (activeIcon) activeIcon.classList.add(userSortDirection);
+
+    const activeHeader = els.table.querySelector(`th[data-key="${userSortKey}"]`);
+    if (activeHeader) activeHeader.classList.add(`active-${userSortDirection}`);
+}
+
+/* ================= USER PAGINATION ================= */
+
+function changeUserPage(delta) {
+    const totalPages = Math.max(1, Math.ceil(filteredUserData.length / userRowsPerPage));
+    const newPage = userCurrentPage + delta;
+
+    if (newPage >= 1 && newPage <= totalPages) {
+        userCurrentPage = newPage;
+        renderUsersTable();
+    }
+}
+
+function changeUserRowsPerPage() {
+    const selectEl = document.getElementById("userRowsPerPage");
+    if (selectEl) {
+        userRowsPerPage = parseInt(selectEl.value);
+    }
+    userCurrentPage = 1;
+    renderUsersTable();
+}
+
+/* ================= USER SELECTION & MODAL ACTIONS ================= */
+
+function selectUserRow(id, rowElement) {
+    const tableBody = document.getElementById("userListBody");
+    if (tableBody) {
+        tableBody.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+    }
+    rowElement.classList.add("selected");
+    selectedUserId = id;
+
+    const editBtn = document.getElementById("editUserBtn");
+    const deleteBtn = document.getElementById("deleteUserBtn");
+    if (editBtn) editBtn.disabled = false;
+    if (deleteBtn) deleteBtn.disabled = false;
+}
+
+function clearUserSelection() {
+    selectedUserId = null;
+    const editBtn = document.getElementById("editUserBtn");
+    const deleteBtn = document.getElementById("deleteUserBtn");
+    if (editBtn) editBtn.disabled = true;
+    if (deleteBtn) deleteBtn.disabled = true;
+
+    const tableBody = document.getElementById("userListBody");
+    if (tableBody) {
+        tableBody.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+    }
+}
+
+async function registerNewUser(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("regName").value.trim();
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPassword").value;
+    const division = document.getElementById("regDivision").value;
+
+    const payload = {
+        name: name,
+        email: email,
+        password: password,
+        division: division
+    };
+
+    try {
+        const response = await fetch("../api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.detail || "Failed to register user."));
+            return;
+        }
+
+        document.getElementById("userRegisterForm").reset();
+        alert(`User ${name} registered successfully!`);
+        closeModal('userRegisterModal');
+        loadUsers(true); // reload users and reset to page 1
+    } catch (error) {
+        console.error("Error registering user:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+function openUserEditModal() {
+    if (selectedUserId === null) return;
+    const user = allUserData.find(u => u.id === selectedUserId);
+    if (!user) return;
+
+    document.getElementById("editUserId").value = user.id;
+    document.getElementById("editName").value = user.name || "";
+    document.getElementById("editEmail").value = user.email || "";
+    document.getElementById("editPassword").value = "";
+    document.getElementById("editDivision").value = user.division || "";
+    document.getElementById("userEditModal").style.display = "flex";
+}
+
+async function editExistingUser(event) {
+    event.preventDefault();
+    const id = document.getElementById("editUserId").value;
+    const name = document.getElementById("editName").value.trim();
+    const email = document.getElementById("editEmail").value.trim();
+    const password = document.getElementById("editPassword").value;
+    const division = document.getElementById("editDivision").value;
+
+    const payload = {
+        name: name,
+        email: email,
+        division: division
+    };
+
+    if (password) {
+        payload.password = password;
+    }
+
+    try {
+        const response = await fetch(`../api/auth/users/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.detail || "Failed to update user."));
+            return;
+        }
+
+        alert(`User ${name} updated successfully!`);
+        closeModal('userEditModal');
+        loadUsers(false); // Reload and preserve current page if possible
+        clearUserSelection();
+    } catch (error) {
+        console.error("Error updating user:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+function openUserDeleteModal() {
+    if (selectedUserId === null) return;
+    const user = allUserData.find(u => u.id === selectedUserId);
+    if (!user) return;
+
+    document.getElementById("deleteUserId").value = user.id;
+    document.getElementById("deleteUserName").textContent = user.name || user.email;
+    document.getElementById("userDeleteModal").style.display = "flex";
+}
+
+async function deleteSelectedUser() {
+    const id = document.getElementById("deleteUserId").value;
+
+    try {
+        const response = await fetch(`../api/auth/users/${id}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.detail || "Failed to delete user."));
+            return;
+        }
+
+        alert("User deleted successfully!");
+        closeModal('userDeleteModal');
+        loadUsers(true); // Reload and reset to page 1
+        clearUserSelection();
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+function applyDepartmentAccess() {                                                                                                      
+    const userDiv = userDivision; // e.g., "admin", "lobby", "cashier"
+    if (!userDiv) return;
+
+    document.querySelectorAll("[data-allowed-div]").forEach(element => {
+        // Get the list of allowed departments for this element
+        const allowedDepts = element.getAttribute("data-allowed-div").split(",");
+
+        // Toggle visibility
+        if (allowedDepts.includes(userDiv.toLowerCase())) {
+            element.style.display = ""; // Restore default display
+        } else {
+            element.style.display = "none"; // Hide button
+        }
+    });
+}
+/* ================= CSV DOWNLOAD ================= */
+
+function openDownloadModal() {
+    document.getElementById("csvTodayOnly").checked = false;
+    document.getElementById("csvDateRange").classList.remove("hidden");
+    document.getElementById("csvDateFrom").value = "";
+    document.getElementById("csvDateTo").value = "";
+    document.getElementById("downloadModal").style.display = "flex";
+}
+
+function toggleCsvDateRange() {
+    const todayChecked = document.getElementById("csvTodayOnly").checked;
+    const dateRange = document.getElementById("csvDateRange");
+
+    if (todayChecked) {
+        dateRange.classList.add("hidden");
+    } else {
+        dateRange.classList.remove("hidden");
+    }
+}
+
+function escapeCsvValue(value) {
+    const text = String(value ?? "");
+    return `"${text.replace(/"/g, '""')}"`;
+}
+
+function computeServiceTimeMs(item) {
+    if (!item.completed_at || !item.created_at) return -1;
+    return new Date(item.completed_at).getTime() - new Date(item.created_at).getTime();
+}
+
+function formatServiceTime(item) {
+    const ms = computeServiceTimeMs(item);
+    if (ms < 0) return "—";
+
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    if (hours > 0) {
+        return `${hours}h ${mins}m ${secs}s`;
+    }
+    return `${mins}m ${secs}s`;
+}
+
+function formatDatetime(isoStr) {
+    if (!isoStr) return "—";
+    const d = new Date(isoStr);
+    const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true });
+    return `${date}, ${time}`;
+}
+
+async function downloadCsv() {
+    const todayOnly = document.getElementById("csvTodayOnly").checked;
+    let url;
+
+    if (todayOnly) {
+        url = `${API_BASE}/today`;
+    } else {
+        const dateFrom = document.getElementById("csvDateFrom").value;
+        const dateTo = document.getElementById("csvDateTo").value;
+
+        if (!dateFrom && !dateTo) {
+            alert("Please select at least one date, or check 'Today Only'.");
+            return;
+        }
+
+        let params = [];
+        if (dateFrom) params.push(`date_from=${dateFrom}`);
+        if (dateTo) params.push(`date_to=${dateTo}`);
+
+        url = `${API_BASE}/all`;
+        if (params.length > 0) {
+            url += `?${params.join("&")}`;
+        }
+    }
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+            throw new Error("Queue API returned an unexpected response.");
+        }
+
+        if (data.length === 0) {
+            alert("No data found for the selected date range.");
+            return;
+        }
+
+        // Build CSV
+        const headers = ["No.", "Q-No.", "Client Name", "Division", "Purpose", "Status", "Priority", "Service Time", "Created At", "Completed At"];
+
+        const rows = data.map(item => [
+            item.id,
+            item.queue_no,
+            item.client_name,
+            item.purpose,
+            item.division.toUpperCase(),
+            item.status.toUpperCase(),
+            item.priority !== "regular" ? escapeHtml(item.priority.toUpperCase()) : "Regular",
+            formatServiceTime(item),
+            item.created_at ? formatDatetime(item.created_at) : "",
+            item.completed_at ? formatDatetime(item.completed_at) : ""
+        ].map(escapeCsvValue));
+
+        let csv = headers.map(escapeCsvValue).join(",") + "\n";
+        rows.forEach(row => {
+            csv += row.join(",") + "\n";
+        });
+
+        // Download
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const filename = todayOnly
+            ? `queue_today_${new Date().toISOString().slice(0, 10)}.csv`
+            : `queue_${document.getElementById("csvDateFrom").value || 
+            "start"}_to_${document.getElementById("csvDateTo").value || "end"}.csv`;
+
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+
+        closeModal('downloadModal');
+
+    } catch (error) {
+        console.error("Error downloading CSV:", error);
+        alert("Failed to download data. Please try again.");
+    }
+}
+
+/* WEBSOCKET */
+
+let socket = null;
+let reconnectTimeout = null;
+let pollingInterval = null;
+
+function startPollingFallback() {
+    if (pollingInterval) {
+        return;
+    }
+
+    pollingInterval = setInterval(async () => {
+        await loadQueue();
+        await loadUsers(false);
+    }, 3000);
+}
+
+function connectWebSocket() {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+        console.warn("No userId found. WebSocket will not connect.");
+        return;
+    }
+
+    // Prevent duplicate connections
+    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+        return;
+    }
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const pathParts = window.location.pathname.split('/');
+    const modules = ['login', 'operator', 'monitoring', 'tv', 'client', 'assets'];
+    const moduleIndex = pathParts.findIndex(part => modules.includes(part));
+    const basePath = moduleIndex !== -1 ? pathParts.slice(0, moduleIndex).join('/') : '';
+    const wsUrl = `${protocol}//${window.location.host}${basePath}/api/ws/connect/${userId}`;
+    socket = new WebSocket(wsUrl);
+
+    socket.onopen = () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+
+        if (reconnectTimeout) {
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = null;
+        }
+    };
+
+    socket.onmessage = async () => {
+        await loadQueue();
+        await loadUsers();
+    };
+
+    socket.onclose = () => {
+        startPollingFallback();
+        reconnectTimeout = setTimeout(() => {
+            connectWebSocket();
+        }, 5000);
+    };
+
+    socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        try {
+            socket.close();
+        } catch (e) {}
+    };
+}
+window.addEventListener("load", () => {
+    startPollingFallback();
+    connectWebSocket();
+});

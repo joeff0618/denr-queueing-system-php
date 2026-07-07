@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DENR Queueing System - Operator Display</title>
+
+<link rel="stylesheet" href="../operator/style.css">
+<script src="../operator/script.js" defer>
+</script>
+<link rel="icon" href="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" type="image/x-icon">
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-top">
+        <div class="sidebar-header" id="sidebar-header-area">
+            <img src="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png"
+                alt="DENR Logo" class="logo" id="denr-logo-operator">   
+            
+            <p class="denr-slogan">
+                Department of Environment and Natural Resources 
+            </p>
+
+        </div>
+        <button id="sidebarToggle" class="sidebar-toggle">
+            <img src="../assets/svg/menu-icon.svg" alt="Menu Icon" class="sidebar-icon">
+        </button>
+    </div>
+
+    <h2>Queueing System</h2>
+
+    <div class="sidebar-nav">
+        <button onclick="showPage('queuePage')">
+            <img src="../assets/svg/checklist-minimalistic-svgrepo-com.svg" alt="Queue List Icon" class="sidebar-icon">
+            <span>Queue List</span>
+        </button>
+
+        <button onclick="add()">
+            <img src="../assets/svg/add-ellipse-svgrepo-com.svg" alt="Add Entry Icon" class="sidebar-icon">
+            <span>Add Entry</span>
+        </button>
+
+        <button id="announcementBtn" onclick="openModal('announcementModal')">
+            <img src="../assets/svg/megaphone-svgrepo-com.svg" alt="Announcement Icon" class="sidebar-icon">
+            <span>Announcement</span>
+        </button>
+
+        <button onclick="showPage('userPage')" data-allowed-div="sadmin">
+            <img src="../assets/svg/user-list-bold-svgrepo-com.svg" alt="User List Icon" class="sidebar-icon">
+            <span>User List</span>
+        </button>
+        
+        <button onclick="openStatsModal()">
+            <img src="../assets/svg/stats-icon.svg" alt="Statistics Icon" class="sidebar-icon">
+            <span>Statistics</span>
+        </button>
+
+        <button id="flashSelectedBtn" onclick="flashSelected()" class="hidden-sidebar-btn"">
+            <img src="../assets/svg/tv-alt-svgrepo-com.svg" alt="Add Entry Icon" class="sidebar-icon">
+            <span>Flash Queue Number</span>
+        </button>
+
+        <button id="editSelectedBtn" onclick="openSelectedEdit()" class="hidden-sidebar-btn"">
+            <img src="../assets/svg/pen-square-svgrepo-com.svg" alt="Add Entry Icon" class="sidebar-icon">
+            <span>Edit Entry</span>
+        </button>
+
+        <button id="deleteSelectedBtn" onclick="deleteSelected()" class="hidden-sidebar-btn"">
+            <img src="../assets/svg/delete-left-svgrepo-com.svg" alt="Add Entry Icon" class="sidebar-icon">
+            <span>Delete Entry</span>
+        </button>
+    </div>
+
+    <div class="sidebar-bottom">
+        <button id="logoutBtn" onclick="openModal('logoutModal')" class="logout-btn">
+            <img src="../assets/svg/logout-icon.svg" alt="Logout Icon" class="sidebar-icon">
+            <span>Logout</span>
+        </button>
+    </div>
+</div>
+<!-- CONTENT -->
+<div class="content">
+
+    <!-- ===================== QUEUE PAGE ===================== -->
+    <!-- DASHBOARD SUMMARY CARDS -->
+    <div id="queuePage" class="page active">
+        <div class="dashboard-grid" aria-label="Operator queue summary">
+            <div class="dashboard-card active-card">
+                <span>Last Updated</span>
+                <div class="time-card">
+                    <span class="sync-dot"></span>
+                    <span class="time-updated" id="operatorLastUpdated">Loading...</span>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <span>Pending</span>
+                <strong id="dashPending">0</strong>
+            </div>
+            <div class="dashboard-card">
+                <span>Forwarded</span>
+                <strong id="dashForwarded">0</strong>
+            </div>
+            <div class="dashboard-card">
+                <span>Completed</span>
+                <strong id="dashCompleted">0</strong>
+            </div>
+            <div class="dashboard-card">
+                <span>Cancelled</span>
+                <strong id="dashCancelled">0</strong>
+            </div>
+            <div class="dashboard-card">
+                <span>Priority</span>
+                <strong id="dashPriority">0</strong>
+            </div>
+        </div>
+
+    <!-- TABLE FILTERS -->
+        <div class="controls">
+
+            <div class="search-field">
+                <span aria-hidden="true"></span>
+                <input type="text" id="searchInput" placeholder="Search name, purpose, queue no."
+                    onkeyup="filterTable()">
+            </div>
+
+            <select id="divisionFilter" onchange="filterTable()">
+                <option value="">All Divisions</option>
+                <option value="smd">SMD</option>
+                <option value="lpdd">LPDD</option>
+                <option value="cashier">Cashier</option>
+                <option value="legal">Legal</option>
+                <option value="admin">Admin</option>
+                <option value="pmd">PMD</option>
+                <option value="rscig">RSCIG</option>
+
+            </select>
+
+            <button class="download-btn" id="download CsvBtn" onclick="openDownloadModal()" data-allowed-div="sadmin">
+                <img src="../assets/svg/download-svgrepo-com.svg" alt="" aria-hidden="true" class="download-icon">
+                Download CSV
+            </button>
+
+        </div>
+
+            <div class="table-shell">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="sortable" data-key="id" onclick="sortQueueBy('id')">No. <span class="sort-icon" id="sort-icon-id"></span></th>
+                        <th class="sortable" data-key="queue_no" onclick="sortQueueBy('queue_no')">Q-No. <span class="sort-icon" id="sort-icon-queue_no"></span></th>
+                        <th class="sortable" data-key="client_name" onclick="sortQueueBy('client_name')">Client Name <span class="sort-icon" id="sort-icon-client_name"></span></th>
+                        <th class="sortable" data-key="purpose" onclick="sortQueueBy('purpose')">Purpose <span class="sort-icon" id="sort-icon-purpose"></span></th>
+                        <th class="sortable" data-key="division" onclick="sortQueueBy('division')">Division <span class="sort-icon" id="sort-icon-division"></span></th>
+                        <th class="sortable" data-key="status" onclick="sortQueueBy('status')">Status <span class="sort-icon" id="sort-icon-status"></span></th>
+                        <th class="sortable" data-key="priority" onclick="sortQueueBy('priority')">Priority <span class="sort-icon" id="sort-icon-priority"></span></th>
+                        <th class="sortable" data-key="created_at" onclick="sortQueueBy('created_at')">Time In <span class="sort-icon" id="sort-icon-created_at"></span></th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="queueBody"></tbody>
+            </table>
+            </div>
+
+        <!-- PANEL ACTIONS -->
+        <div class="queue-panel">
+
+            <div class="current-qno">
+                <span>Current Card</span>
+                <strong id="currentQNo">-</strong>
+            </div>
+            <div class="queue-actions">
+                <div class="buttonGrp">
+                    <button onclick="callNext()">Flash Next</button>
+                    <button onclick="skip('pending')">Skip</button>
+                </div>
+                <button onclick="updateCurrent('forwarded')">Forward to Division</button>
+                <div class="buttonGrp">
+                    <button onclick="updateCurrent('completed')">Complete</button>
+                    <button onclick="updateCurrent('cancelled')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== USER PAGE ===================== -->
+    <div id="userPage" class="page">
+        <div class="dashboard-grid" aria-label="Operator user summary">
+            <div class="dashboard-card active-card">
+                <span>Last Updated</span>
+                <div class="time-card">
+                    <span class="sync-dot"></span>
+                    <span class="time-updated" id="userLastUpdated">Loading...</span>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <span>Total Users</span>
+                <strong id="dashTotalUsers">0</strong>
+            </div>
+            <div class="dashboard-card">
+                <span>Online</span>
+                <strong id="dashOnlineUsers">N/A</strong>
+            </div>
+        </div>
+
+        <!-- TABLE FILTERS -->
+        <div class="controls">
+            <div class="search-field">
+                <span aria-hidden="true"></span>
+                <input type="text" id="userSearchInput" placeholder="Search name, email, division..."
+                    onkeyup="filterUsersTable()">
+            </div>
+
+            <select id="userDivisionFilter" onchange="filterUsersTable()">
+                <option value="">All Divisions</option>
+                <option value="smd">SMD</option>
+                <option value="lpdd">LPDD</option>
+                <option value="cashier">Cashier</option>
+                <option value="legal">Legal</option>
+                <option value="admin">Admin</option>
+                <option value="pmd">PMD</option>
+                <option value="rscig">RSCIG</option>
+                <option value="lobby">Lobby</option>
+            </select>
+        </div>
+
+        <div class="table-shell user">
+            <table id="userTable">
+                <thead>
+                    <tr>
+                        <th style="width: 8%">No.</th>
+                        <th style="width: 12%">Status</th>
+                        <th class="sortable" style="width: 25%" data-key="name" onclick="sortUsersBy('name')">Name & Email <span class="sort-icon" id="sort-icon-user-name"></span></th>
+                        <th class="sortable" style="width: 15%" data-key="division" onclick="sortUsersBy('division')">Division <span class="sort-icon" id="sort-icon-user-division"></span></th>
+                        <th class="sortable" style="width: 18%" data-key="created_at" onclick="sortUsersBy('created_at')">Created At <span class="sort-icon" id="sort-icon-user-created_at"></span></th>
+                        <th style="width: 10%">Last Seen</th>
+                    </tr>
+                </thead>
+                <tbody id="userListBody"></tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination" id="userPagination">
+            <div class="user-action-buttons" style="display: flex; gap: 8px;">
+                <button id="registerUserBtn" onclick="openModal('userRegisterModal')">Register User</button>
+                <button id="editUserBtn" onclick="openUserEditModal()" disabled>Edit</button>
+                <button id="deleteUserBtn" onclick="openUserDeleteModal()" disabled>Delete</button>
+            </div>
+            <div class="pagination-right">
+                <button id="userPrevPageBtn" onclick="changeUserPage(-1)">‹ Prev</button>
+                <span id="userPageInfo">Page 1 of 1</span>
+                <button id="userNextPageBtn" onclick="changeUserPage(1)">Next ›</button>
+                <select id="userRowsPerPage" onchange="changeUserRowsPerPage()">
+                    <option value="6" selected>6 rows</option>
+                    <option value="15">15 rows</option>
+                    <option value="25">25 rows</option>
+                    <option value="50">50 rows</option>
+                    <option value="100">100 rows</option>
+                </select>
+                <span class="total-count" id="userTotalCount">0 users</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADD AND EDIT ENTRY DATA-->
+<div id="entryModal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle">Add Entry</h2>
+
+        <form id="entryForm">
+            <input type="hidden" id="entryId">
+
+            <div class="form-group">
+                <label>
+                    Client Name <span class="required">*</span>
+                </label>
+                <div class="input-wrapper">
+                    <input id="clientName" required maxlength="40" oninput="toggleClearButton(this)">
+                    <button type="button" class="clear-btn" onclick="clearField('clientName')">
+                        ✕
+                    </button>
+                </div>
+                <span class="error-message" id="clientError"></span>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Purpose <span class="required">*</span>
+                </label>
+                <div class="input-wrapper">
+                    <textarea id="purpose" required maxlength="100" 
+                        oninput="toggleClearButton(this)"></textarea>
+
+                    <button type="button" class="clear-btn textarea-clear"
+                            onclick="clearField('purpose')">
+                        ✕
+                    </button>
+                </div>
+                <span class="error-message" id="purposeError"></span>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Division <span class="required">*</span>
+                </label>
+                <select id="division" required>
+                    <option value="">Select</option>
+                    <option value="smd">SMD</option>
+                    <option value="lpdd">LPDD</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="legal">Legal</option>
+                    <option value="admin">Admin</option>
+                    <option value="pmd">PMD</option>
+                    <option value="rscig">RSCIG</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Priority <span class="required">*</span>
+                </label>
+                <select id="priority" required>
+                    <option value="false">Non-Priority</option>
+                    <option value="true">Priority</option>
+                </select>
+
+                <div class="priority-options" id="priorityOptions">
+                    <label>
+                        Priority Type <span class="required">*</span>
+                    </label>
+                    <div class="priority-buttons">
+                        <button type="button" class="priority-btn active" data-value="senior">
+                            Senior Citizen
+                        </button>
+                        <button type="button" class="priority-btn" data-value="pwd">
+                            Person With Disability
+                        </button>
+                        <button type="button" class="priority-btn bottom-btn" data-value="mother">
+                            Pregnant / With Infant
+                        </button>
+                        <input type="hidden" id="priorityType" value="senior">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="save-btn" type="submit" id="submitBtn">
+                    Save
+                </button>
+                <button type="button" class="cancel-btn"
+                    onclick="closeModal('entryModal')">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- UPDATE STATUS MODAL -->
+<div id="updateModal" class="modal">
+    <div class="modal-content">
+        <h2>Update Status</h2>
+        <input type="hidden" id="editNo">
+
+        <div class="status-buttons">
+            <button type="button" class="status-btn active" data-status="pending">
+                Pending
+            </button>
+            <button type="button" class="status-btn" data-status="processing">
+                Processing
+            </button>
+            <button type="button" class="status-btn" data-status="forwarded">
+                Forwarded
+            </button>
+            <button type="button" class="status-btn" data-status="completed">
+                Completed
+            </button>
+            <button type="button" class="status-btn bottom-btn" data-status="cancelled">
+                Cancelled
+            </button>
+        </div>
+        <input type="hidden" id="updateStatus" value="pending">
+
+        <div class="modal-actions">
+            <button class="save-btn" onclick="saveStatusUpdate()">
+                Save
+            </button>
+            <button class="cancel-btn" onclick="closeModal('updateModal')">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ANNOUNCE MESSAGE MODAL -->
+<div id="announcementModal" class="modal">
+    <div class="modal-content">
+        <h2>Announcement</h2>
+
+        <div class="modal-body">
+            <label for="messageText">
+                Message
+            </label>
+            <textarea id="messageText" rows="5" maxlength="400"
+                placeholder="Type your message here..."></textarea>
+            <span id="messageError" class="error-message"></span>
+        </div>
+
+        <div class="modal-actions">
+            <button class="save-btn" onclick="saveAnnouncement()">
+                Save
+            </button>
+            <button class="cancel-btn" onclick="closeModal('announcementModal')">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <h2>Confirm Delete</h2>
+        <input type="hidden" id="deleteEntryNo">
+
+        <p class="delete-warning">
+            <span class="primary-warning">
+                Are you sure you want to permanently delete this entry?
+            </span>
+            <br>
+            <span class="secondary-warning">
+                This action cannot be undone.
+            </span>
+        </p>
+
+        <div class="modal-actions">
+            <button class="delete-btn" onclick="deleteEntry()">Delete</button>
+            <button class="cancel-btn" onclick="closeModal('deleteModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- STATISTICS MODAL -->
+<div id="statsModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Statistics</h2>
+            <button class="cancel-btn" onclick="closeModal('statsModal')">×</button>
+        </div>
+
+        <div class="modal-body">
+        <!-- LEFT SIDE -->
+            <div class="stats-left">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-range="today">Today</button>
+                    <button class="filter-btn" data-range="yesterday">Yesterday</button>
+                    <button class="filter-btn" data-range="7days">7 Days</button>
+                    <button class="filter-btn" data-range="month">Month</button>
+                    <button class="filter-btn" data-range="year">Year</button>
+                </div>
+
+                <div class="chart-container">
+                    <div id="statsChart" class="simple-chart"></div>
+                </div>
+                <div id="chartTooltip" class="chart-tooltip"></div>
+            </div>
+
+      <!-- RIGHT SIDE -->
+            <div class="stats-right">
+                <table>
+                    <thead>
+                        <tr>
+                        <th>Status</th>
+                        <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsTableBody"></tbody>
+                </table>
+                <div class="chart-legend">
+                    <div class="chart-legend-item">
+                        <span class="chart-legend-color completed"></span>
+                        <span>Completed</span>
+                    </div>
+                    <div class="chart-legend-item">
+                        <span class="chart-legend-color cancelled"></span>
+                        <span>Cancelled</span>
+                    </div>
+                    <div class="chart-legend-item">
+                        <span class="chart-legend-color pending"></span>
+                        <span>Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div id="logoutModal" class="modal">
+    <div class="modal-content">
+        <h2>Confirm Logout</h2>
+
+        <p class="logout-warning">
+            <span class="primary-warning">
+                Are you sure you want to logout?
+            </span>
+        </p>
+
+        <div class="modal-actions">
+            <button class="save-btn" onclick="logout()">Logout</button>
+            <button class="cancel-btn" onclick="closeModal('logoutModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- DOWNLOAD CSV MODAL -->
+<div id="downloadModal" class="modal">
+    <div class="modal-content">
+        <h2>Download CSV</h2>
+        <p class="modal-desc">Choose a date range for the data you want to export.</p>
+
+        <label class="today-toggle modal-toggle">
+            <input type="checkbox" id="csvTodayOnly" onchange="toggleCsvDateRange()">
+            Today Only
+        </label>
+
+        <div class="csv-date-range" id="csvDateRange">
+            <div class="csv-date-field">
+                <label>From:</label>
+                <input type="date" id="csvDateFrom">
+            </div>
+            <div class="csv-date-field">
+                <label>To:</label>
+                <input type="date" id="csvDateTo">
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="save-btn" onclick="downloadCsv()">
+                Download
+            </button>
+            <button class="cancel-btn" onclick="closeModal('downloadModal')">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- REGISTER USER MODAL -->
+<div id="userRegisterModal" class="modal">
+    <div class="modal-content">
+        <h2>Register User</h2>
+        <form id="userRegisterForm" onsubmit="registerNewUser(event)">
+            <div class="form-group">
+                <label>Name <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="regName" required maxlength="100" placeholder="Enter full name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Email <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="regEmail" type="email" required maxlength="100" placeholder="Enter email address">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Password <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="regPassword" type="password" required placeholder="Enter password">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Division <span class="required">*</span></label>
+                <select id="regDivision" required>
+                    <option value="">Select Division</option>
+                    <option value="smd">SMD</option>
+                    <option value="lpdd">LPDD</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="legal">Legal</option>
+                    <option value="admin">Admin</option>
+                    <option value="pmd">PMD</option>
+                    <option value="rscig">RSCIG</option>
+                    <option value="lobby">Lobby</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button class="save-btn" type="submit">Register</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('userRegisterModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div id="userEditModal" class="modal">
+    <div class="modal-content">
+        <h2>Edit User</h2>
+        <form id="userEditForm" onsubmit="editExistingUser(event)">
+            <input type="hidden" id="editUserId">
+            
+            <div class="form-group">
+                <label>Name <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="editName" required maxlength="100" placeholder="Enter full name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Email <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="editEmail" type="email" required maxlength="100" placeholder="Enter email address">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Password <span style="font-size: 0.8rem; color: var(--muted); font-weight: normal;">
+                    (Leave blank to keep current password)</span>
+                </label>
+                <div class="input-wrapper">
+                    <input id="editPassword" type="password" placeholder="Enter new password">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Division <span class="required">*</span></label>
+                <select id="editDivision" required>
+                    <option value="">Select Division</option>
+                    <option value="smd">SMD</option>
+                    <option value="lpdd">LPDD</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="legal">Legal</option>
+                    <option value="admin">Admin</option>
+                    <option value="pmd">PMD</option>
+                    <option value="rscig">RSCIG</option>
+                    <option value="lobby">Lobby</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button class="save-btn" type="submit">Save Changes</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('userEditModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- USER DELETE MODAL -->
+<div id="userDeleteModal" class="modal">
+    <div class="modal-content">
+        <h2>Confirm Delete User</h2>
+        <input type="hidden" id="deleteUserId">
+
+        <p class="delete-warning">
+            <span class="primary-warning">
+                Are you sure you want to permanently delete this user: <strong id="deleteUserName"></strong>?
+            </span>
+            <br>
+            <span class="secondary-warning">
+                This action cannot be undone.
+            </span>
+        </p>
+
+        <div class="modal-actions">
+            <button class="delete-btn" style="background: var(--danger); color: white;" onclick="deleteSelectedUser()">Delete</button>
+            <button class="cancel-btn" onclick="closeModal('userDeleteModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+

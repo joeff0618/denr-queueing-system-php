@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>DENR Queueing System — TV Display</title>
+	<meta name="description" content="DENR Queueing System live TV display for service counters.">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css?v=2">
+	<link rel="icon" href="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" type="image/x-icon">
+</head>
+<body>
+
+	<div class="tv-container" id="tv-container">
+
+		<!-- ====== TOP SECTION ====== -->
+		<section class="top-section" id="top-section">
+			 <img src="../assets/img/logo.png"
+				alt="DENR Logo"	class="logo" id="denr-logo">
+
+				<div class="datetime-announcement-area" id="datetime-announcement-area">
+					<div class="datetime-block" id="datetime-block">
+						<div class="date-text" id="date-display">10 SEPTEMBER 2026</div>
+						<div class="time-text" id="time-display">00:00<span class="ampm" id="ampm-display">AM</span></div> 
+					</div>
+					<div class="announcement-area" id="announcement-area" style="display: none;">
+						<div class="announcement-header" id="announcement-header">Announcement</div>
+						<div class="announcement-body" id="announcement-body"></div>
+					</div>
+				</div>
+
+			<div class="dynamic-office" id="dynamic-office">
+				<div class="office-column-header" id="office-header">OFFICE</div>
+					<div class="office-column-body" id="office-body"></div>
+			</div>
+
+		</section>
+
+		<!-- ====== BOTTOM SECTION ====== -->
+		<section class="bottom-section" id="bottom-section">
+			<!-- Queue Columns (SMD, LPDD, CASHIER) -->
+			<div class="queue-columns" id="queue-columns">
+
+				<!-- SMD Column -->
+				<div class="queue-column" id="queue-col-smd">
+					<div class="queue-column-header" id="queue-header-smd">SMD</div>
+					<div class="queue-column-body" id="queue-body-smd">
+					</div>
+				</div>
+
+				<!-- LPDD Column -->
+				<div class="queue-column" id="queue-col-lpdd">
+					<div class="queue-column-header" id="queue-header-lpdd">LPDD</div>
+					<div class="queue-column-body" id="queue-body-lpdd">
+						<!-- Queue items will be dynamically inserted here -->
+					</div>
+				</div>
+
+				<!-- CASHIER Column -->
+				<div class="queue-column" id="queue-col-cashier">
+					<div class="queue-column-header" id="queue-header-cashier">CASHIER</div>
+					<div class="queue-column-body" id="queue-body-cashier">
+					</div>
+				</div>
+			</div>
+
+			<!-- Sidebar: In Queue + Priority -->
+			<div class="sidebar" id="sidebar">
+				<div class="sidebar-header">
+					<div class="sidebar-header-cell">In Queue</div>
+					<div class="sidebar-header-cell">Priority</div>
+				</div>
+				<div class="sidebar-body" id="sidebar-body">
+					<div class="sidebar-col" id="sidebar-in-queue">
+					</div>
+					<div class="sidebar-col" id="sidebar-priority">
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+	<script src="app.js?v=3"></script>
+</body>
+</html>

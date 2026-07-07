@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DENR Queueing System — Monitoring</title>
+<meta name="description" content="DENR Queueing System monitoring dashboard for queue oversight.">
+
+<link rel="stylesheet" href="../monitoring/style.css">
+<script src="../monitoring/script.js" defer></script>
+<link rel="icon" href="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" type="image/x-icon">
+</head>
+
+<body>
+    <div class="content">
+
+<!-- ===================== QUEUE PAGE ===================== -->
+        <div id="queuePage" class="page active">
+
+            <div class="page-header">
+                <div class="brand-block">
+                    <img src="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" alt="DENR logo">
+                    <div>
+                        <p>DENR Queueing System</p>
+                        <div class="title-container">
+                            <h1>Queue Monitoring</h1>
+                            <span id="divisionBadge" class="div-badge" style="display: none;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <span class="refresh-status">
+                        <span class="status-dot"></span>
+                        <span id="lastUpdated">Syncing...</span>
+                    </span>
+                    <button class="statistics-btn" id="viewStatisticsBtn" onclick="openStatisticsModal()">
+                        <img src="../assets/svg/stats-icon.svg" alt="" aria-hidden="true" class="statistics-icon">
+                        View Statistics
+                    </button>
+                    <button class="download-btn" id="downloadCsvBtn" onclick="openDownloadModal()">
+                        <img src="../assets/svg/download-svgrepo-com.svg" alt="" aria-hidden="true" class="download-icon">
+                        Download CSV
+                    </button>
+                    </button>
+                    <button class="logout-btn" id="logoutBtn" onclick="openLogoutModal()">
+                        <img src="../assets/svg/logout-icon.svg" alt="" aria-hidden="true" class="logout-icon">
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-grid" aria-label="Queue summary">
+                <div class="stat-card">
+                    <span class="stat-label">Loaded</span>
+                    <strong id="statTotal">0</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Pending</span>
+                    <strong id="statPending">0</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Processing</span>
+                    <strong id="statProcessing">0</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Forwarded</span>
+                    <strong id="statForwarded">0</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Completed</span>
+                    <strong id="statCompleted">0</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Priority</span>
+                    <strong id="statPriority">0</strong>
+                </div>
+            </div>
+
+<!-- FILTERS -->
+            <div class="controls">
+
+                <div class="search-field">
+                    <span aria-hidden="true"></span>
+                    <input type="text"
+                        id="searchInput"
+                        placeholder="Search name, purpose, queue no."
+                        onkeyup="applyFilters()">
+                </div>
+
+                <div class="filter-group">
+                    <select id="priorityFilter" onchange="applyFilters()" aria-label="Priority filter">
+                        <option value="">All Priority</option>
+                        <option value="true">Priority</option>
+                        <option value="false">Non-Priority</option>
+                    </select>
+
+                    <select id="statusFilter" onchange="applyFilters()" aria-label="Status filter">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="forwarded">Forwarded</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <label class="today-toggle">
+                    <input type="checkbox" id="todayOnly" onchange="onTodayToggle()" checked>
+                    <span>Today Only</span>
+                </label>
+            </div>
+
+<!-- TABLE AND PANEL -->
+    <div class="queue-layout">
+
+        <!-- TABLE -->
+        <div class="table-shell">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="sortable" data-key="id" onclick="sortBy('id')">
+                            No. <span class="sort-icon" id="sort-icon-id"></span>
+                        </th>
+                        <th class="sortable" data-key="queue_no" onclick="sortBy('queue_no')">
+                            Q-No. <span class="sort-icon" id="sort-icon-queue_no"></span>
+                        </th>
+                        <th class="sortable" data-key="client_name" onclick="sortBy('client_name')">
+                            Client Name <span class="sort-icon" id="sort-icon-client_name"></span>
+                        </th>
+                        <th>Purpose</th>
+                        <th class="sortable" data-key="status" onclick="sortBy('status')">
+                            Status <span class="sort-icon" id="sort-icon-status"></span>
+                        </th>
+                        <th class="sortable" data-key="priority" onclick="sortBy('priority')">
+                            Priority <span class="sort-icon" id="sort-icon-priority"></span>
+                        </th>
+                        <th class="sortable" data-key="service_time" onclick="sortBy('service_time')">
+                            Service Time <span class="sort-icon" id="sort-icon-service_time"></span>
+                        </th>
+                        <th class="sortable" data-key="created_at" onclick="sortBy('created_at')">
+                            Created At <span class="sort-icon" id="sort-icon-created_at"></span>
+                        </th>
+                        <th class="sortable" data-key="completed_at" onclick="sortBy('completed_at')">
+                            Completed At <span class="sort-icon" id="sort-icon-completed_at"></span>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody id="queueBody"></tbody>
+            </table>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="queue-panel">
+            <div class="number-display" id="numberDisplay">
+                <div class="number-grid">
+                    <!-- Dynamically append buttons -->
+                </div>
+            </div>
+
+            <button class="panel-btn" id="completeBtn" onclick="updateCurrent('completed')">
+                Complete
+            </button>
+            <button class="panel-btn" id="returnBtn" onclick="updateCurrent('pending')">
+                Return
+            </button>
+        </div>
+    </div>
+
+<!-- PAGINATION -->
+            <div class="pagination" id="pagination">
+                <button id="prevPageBtn" onclick="changePage(-1)">‹ Prev</button>
+                <span id="pageInfo">Page 1 of 1</span>
+                <button id="nextPageBtn" onclick="changePage(1)">Next ›</button>
+                <select id="rowsPerPage" onchange="changeRowsPerPage()">
+                    <option value="7" selected>6 rows</option>
+                    <option value="15">15 rows</option>
+                    <option value="25">25 rows</option>
+                    <option value="50">50 rows</option>
+                    <option value="100">100 rows</option>
+                </select>
+                <span class="total-count" id="totalCount">0 items</span>
+            </div>
+
+        </div>
+    </div>
+
+<!-- DOWNLOAD CSV MODAL -->
+<div id="downloadModal" class="modal">
+    <div class="modal-content">
+        <h2>Download CSV</h2>
+        <p class="modal-desc">Choose a date range for the data you want to export.</p>
+
+        <label class="today-toggle modal-toggle">
+            <input type="checkbox" id="csvTodayOnly" onchange="toggleCsvDateRange()">
+            Today Only
+        </label>
+
+        <div class="csv-date-range" id="csvDateRange">
+            <div class="csv-date-field">
+                <label>From:</label>
+                <input type="date" id="csvDateFrom">
+            </div>
+            <div class="csv-date-field">
+                <label>To:</label>
+                <input type="date" id="csvDateTo">
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="save-btn" onclick="downloadCsv()">
+                Download
+            </button>
+            <button class="cancel-btn" onclick="closeModal('downloadModal')">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- STATISTICS MODAL -->
+<div id="statsModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Statistics</h2>
+            <button class="cancel-btn" onclick="closeStatisticsModal()">×</button>
+        </div>
+        <div class="modal-body">
+
+        <!-- LEFT SIDE -->
+            <div class="stats-left">
+
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-range="today">Today</button>
+                    <button class="filter-btn" data-range="yesterday">Yesterday</button>
+                    <button class="filter-btn" data-range="7days">7 Days</button>
+                    <button class="filter-btn" data-range="month">Month</button>
+                    <button class="filter-btn" data-range="year">Year</button>
+                </div>
+
+                <div class="chart-container">
+                    <div id="statsChart" class="simple-chart"></div>
+                </div>
+                <div id="chartTooltip" class="chart-tooltip"></div>
+            </div>
+
+      <!-- RIGHT SIDE -->
+            <div class="stats-right">
+                <table>
+                    <thead>
+                        <tr>
+                        <th>Status</th>
+                        <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsTableBody"></tbody>
+                </table>
+                <div class="chart-legend">
+                    <div class="chart-legend-item">
+                        <span class="chart-legend-color completed"></span>
+                        <span>Completed</span>
+                    </div>
+                    <div class="chart-legend-item">
+                        <span class="chart-legend-color cancelled"></span>
+                        <span>Cancelled</span>
+                    </div>
+                    <div class="chart-legend-item">
+                        <span class="chart-legend-color pending"></span>
+                        <span>Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div id="logoutModal" class="modal">
+    <div class="modal-content">
+        <h2>Confirm Logout</h2>
+
+        <p class="logout-warning">
+            <span class="primary-warning">
+                Are you sure you want to logout?
+            </span>
+        </p>
+
+        <div class="modal-actions">
+            <button class="save-btn" onclick="logout()">Logout</button>
+            <button class="cancel-btn" onclick="closeModal('logoutModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

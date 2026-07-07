@@ -1,0 +1,281 @@
+:root {
+    --bg-light: #ffffff; 
+    --bg-dark: #0f172a;
+    --primary: #15803d; /* DENR Green */
+    --primary-hover: #166534;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --glass-bg: rgba(15, 23, 42, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --input-border: rgba(255, 255, 255, 0.15);
+    --input-focus: rgba(34, 197, 94, 0.4);
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --radius-lg: 20px;
+    --radius-md: 12px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg-dark);
+    background-image: url('../assets/img/global.webp');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+}
+
+/* Dark overlay to ensure text readability over the image */
+body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.6) 100%);
+    z-index: 0;
+}
+
+.login-wrapper {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    padding: 24px;
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.glass-effect {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 25px 50px -12px var(--shadow-color);
+}
+
+.login-container {
+    width: min(100%, 420px);
+    padding: 40px 32px;
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Add a subtle top glow for premium feel */
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.6), transparent);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.logo {
+    width: 80px;
+    height: auto;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.login-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+
+.login-header p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper i {
+    position: absolute;
+    left: 16px;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    transition: color 0.3s ease;
+    z-index: 2;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 14px 16px 14px 44px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.input-wrapper input::placeholder {
+    color: rgba(148, 163, 184, 0.5);
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 4px var(--input-focus);
+}
+
+.input-wrapper input:focus + i,
+.input-wrapper:focus-within i {
+    color: var(--primary);
+}
+
+.login-btn {
+    margin-top: 12px;
+    background: var(--primary);
+    color: white;
+    padding: 14px 24px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.login-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.login-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(21, 128, 61, 0.4);
+}
+
+.login-btn:hover::after {
+    left: 200%;
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+.login-btn i {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.login-btn:hover i {
+    transform: translateX(4px);
+}
+
+/* TV Redirect Button (Bottom Left) */
+.tv-redirect-btn {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tv-redirect-btn img {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+}
+
+.tv-redirect-btn:hover {
+    background: var(--primary);
+    border-color: rgba(34, 197, 94, 0.4);
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 10px 20px rgba(21, 128, 61, 0.4);
+}
+
+.tv-redirect-btn:hover img {
+    transform: scale(1.05);
+}
+
+.tv-redirect-btn:active {
+    transform: scale(0.95);
+}
+
+/* Client Redirect Button (Positioned above TV button) */
+.client-redirect-btn {
+    bottom: 92px;
+}

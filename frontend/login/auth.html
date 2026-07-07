@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DENR Queueing System - Login</title>
+    <meta name="description" content="Login to the DENR Queueing System portal">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../login/style.css">
+    <script src="../login/script.js" defer></script>
+    <link rel="icon" href="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" type="image/x-icon">
+</head>
+<body id="loginPage">
+    <div class="login-wrapper">
+        <div class="login-container glass-effect">
+            <div class="login-header">
+                <img src="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" alt="DENR Logo" class="logo" />
+                <h2>Welcome Back</h2>
+                <p>Sign in to the Queueing System</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <label for="emailField">Email</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-envelope"></i>
+                        <input type="email" id="emailField" name="email" placeholder="Enter your email" required autocomplete="email">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="passwordField">Password</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-lock-key"></i>
+                        <input type="password" id="passwordField" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                    </div>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <span>Sign In</span>
+                    <i class="ph ph-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <a href="../client/index.html" class="tv-redirect-btn client-redirect-btn" title="View Client Portal">
+        <img src="../assets/svg/iphone-icon.svg" alt="Client View">
+    </a>
+
+    <a href="../tv/index.html" class="tv-redirect-btn" title="View TV Display">
+        <img src="../assets/svg/tv-alt-svgrepo-com.svg" alt="TV View">
+    </a>
+</body>
+</html>
