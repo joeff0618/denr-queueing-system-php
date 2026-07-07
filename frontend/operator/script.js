@@ -177,7 +177,7 @@ document.getElementById("entryForm")
             const cardsData = await cardsRes.json();
 
             if (cardsData.available_cards.length === 0) {
-                alert( "No cards available! All 20 cards are currently in use." );
+                alert( "No cards available! All 30 cards are currently in use." );
                 return;
             }
 
