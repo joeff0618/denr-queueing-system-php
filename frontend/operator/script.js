@@ -1557,76 +1557,25 @@ async function downloadCsv() {
     }
 }
 
-/* WEBSOCKET */
+/* ================= AUTO HTTP REFRESH ================= */
 
-let socket = null;
-let reconnectTimeout = null;
 let pollingInterval = null;
 
-function startPollingFallback() {
+function startPolling() {
     if (pollingInterval) {
-        return;
+        return; // Prevent duplicate intervals
     }
 
     pollingInterval = setInterval(async () => {
-        await loadQueue();
-        await loadUsers(false);
-    }, 3000);
-}
-
-function connectWebSocket() {
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
-        console.warn("No userId found. WebSocket will not connect.");
-        return;
-    }
-
-    // Prevent duplicate connections
-    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-        return;
-    }
-
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const pathParts = window.location.pathname.split('/');
-    const modules = ['login', 'operator', 'monitoring', 'tv', 'client', 'assets'];
-    const moduleIndex = pathParts.findIndex(part => modules.includes(part));
-    const basePath = moduleIndex !== -1 ? pathParts.slice(0, moduleIndex).join('/') : '';
-    const wsUrl = `${protocol}//${window.location.host}${basePath}/api/ws/connect/${userId}`;
-    socket = new WebSocket(wsUrl);
-
-    socket.onopen = () => {
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
-            pollingInterval = null;
-        }
-
-        if (reconnectTimeout) {
-            clearTimeout(reconnectTimeout);
-            reconnectTimeout = null;
-        }
-    };
-
-    socket.onmessage = async () => {
-        await loadQueue();
-        await loadUsers();
-    };
-
-    socket.onclose = () => {
-        startPollingFallback();
-        reconnectTimeout = setTimeout(() => {
-            connectWebSocket();
-        }, 5000);
-    };
-
-    socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
         try {
-            socket.close();
-        } catch (e) {}
-    };
+            await loadQueue();
+            await loadUsers(false);
+        } catch (error) {
+            console.error("Error refreshing data:", error);
+        }
+    }, 1000); // Every 1 second
 }
+
 window.addEventListener("load", () => {
-    startPollingFallback();
-    connectWebSocket();
+    startPolling();
 });

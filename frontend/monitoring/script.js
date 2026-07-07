@@ -29,7 +29,7 @@ function updateDivisionBadge() {
 
 (async function() {                                                                                                           
             try {                                                                                                                     
-                const response = await fetch("../api/auth/profile");                                                                    
+                const response = await fetch("/api/auth/profile");                                                                    
                 if (!response.ok) {                                                                                                   
                     // If unauthorized (e.g. 401), redirect back to login                                                             
                     window.location.replace("../login/auth.html");                                                                      
@@ -823,76 +823,24 @@ function closeModal(modalId) {
     document.getElementById(modalId).style.display = "none";
 }
 
-/* ================= WEBSOCKET ================= */
-let socket = null;
-let reconnectTimeout = null;
+/* ================= AUTO HTTP REFRESH ================= */
+
 let pollingInterval = null;
 
-function startPollingFallback() {
+function startPolling() {
     if (pollingInterval) {
         return;
     }
 
     pollingInterval = setInterval(async () => {
-        await loadAllData(false);
-    }, 5000);
-}
-
-function connectWebSocket() {
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
-        console.warn("No userId found. WebSocket will not connect.");
-        return;
-    }
-
-    // Prevent duplicate connections
-    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-        return;
-    }
-
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const pathParts = window.location.pathname.split('/');
-    const modules = ['login', 'operator', 'monitoring', 'tv', 'client', 'assets'];
-    const moduleIndex = pathParts.findIndex(part => modules.includes(part));
-    const basePath = moduleIndex !== -1 ? pathParts.slice(0, moduleIndex).join('/') : '';
-    const wsUrl = `${protocol}//${window.location.host}${basePath}/api/ws/connect/${userId}`;
-    socket = new WebSocket(wsUrl);
-
-    socket.onopen = () => {
-        console.log("WebSocket connected.");
-
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
-            pollingInterval = null;
-        }
-
-        if (reconnectTimeout) {
-            clearTimeout(reconnectTimeout);
-            reconnectTimeout = null;
-        }
-    };
-
-    socket.onmessage = async () => {
-        console.log("Server update received → refreshing data");
-        await loadAllData(false);
-    };
-
-    socket.onclose = () => {
-        console.log("WebSocket disconnected. Reconnecting in 5 seconds...");
-        startPollingFallback();
-        reconnectTimeout = setTimeout(() => { connectWebSocket(); }, 5000);
-    };
-
-    socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
         try {
-            socket.close();
-        } catch (e) {}
-    };
+            await loadAllData(false);
+        } catch (error) {
+            console.error("Error refreshing data:", error);
+        }
+    }, 1000);
 }
 
 window.addEventListener("load", () => {
-    startPollingFallback();
-    connectWebSocket();
+    startPolling();
 });
