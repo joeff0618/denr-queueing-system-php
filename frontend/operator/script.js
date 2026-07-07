@@ -672,14 +672,69 @@ function updateOperatorSortIcons() {
 }
 
 function updateOperatorDashboard() {
-    const processingItem = allQueueData.find(item => item.status.toLowerCase() === "processing");
+    const processingItems = allQueueData.filter(item => item.status.toLowerCase() === "processing");
+    
+    const display = document.getElementById("operatorNumberDisplay");
+    if (display) {
+        display.innerHTML = `<div class="number-grid"></div>`;
+        const grid = display.querySelector(".number-grid");
+        
+        if (processingItems.length === 0) {
+            grid.innerHTML = `
+                <div style="
+                    grid-column: 1 / -1;
+                    text-align: center;
+                    color: var(--muted);
+                    font-weight: 700;
+                    padding: 20px;
+                ">
+                    -
+                </div>
+            `;
+        } else {
+            processingItems.forEach(item => {
+                const btn = document.createElement("button");
+                btn.className = "queue-number";
+                btn.textContent = String(item.queue_no);
+                
+                if (item.id === selectedEntryId) {
+                    btn.classList.add("active");
+                }
+                
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    if (selectedEntryId === item.id) {
+                        clearSelection();
+                    } else {
+                        // Find matching row
+                        const row = document.querySelector(`tr[onclick*="selectRow(${item.id}"]`);
+                        selectedEntryId = item.id;
+                        document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+                        if (row) {
+                            row.classList.add("selected");
+                        }
+                        
+                        document.querySelectorAll(".queue-number").forEach(b => b.classList.remove("active"));
+                        btn.classList.add("active");
+                        
+                        document.getElementById("editSelectedBtn").classList.add("show");
+                        document.getElementById("deleteSelectedBtn").classList.add("show");
+                    }
+                });
+                
+                grid.appendChild(btn);
+            });
+        }
+    }
+
     const setText = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = value;
     };
 
-    setText("currentQNo", processingItem ? processingItem.queue_no : "-");
-    setText("dashNowServing", processingItem ? `#${processingItem.queue_no}` : "-");
+    const firstProc = processingItems[0];
+    setText("currentQNo", firstProc ? firstProc.queue_no : "-");
+    setText("dashNowServing", firstProc ? `#${firstProc.queue_no}` : "-");
     setText("dashPending", allQueueData.filter(item => item.status === "pending").length);
     setText("dashForwarded", allQueueData.filter(item => item.status === "forwarded").length);
     setText("dashCompleted", allQueueData.filter(item => item.status === "completed").length);
@@ -792,16 +847,8 @@ async function flashSelected() {
         return;
     }
     try {
-        // Check if someone is already being processed
         const todayRes = await fetch(`${API_BASE}/today`);
         const queue = await todayRes.json();
-
-        const alreadyProcessing = queue.find(q => q.status.toLowerCase() === "processing");
-        if (alreadyProcessing) {
-            alert(`Card #${alreadyProcessing.queue_no} is still being processed. Please complete or cancel it first.`);
-            return;
-        }
-
         const item = queue.find(q => q.id === selectedEntryId);
         if(!item) return;
 
@@ -828,8 +875,9 @@ document.addEventListener("click", function(e){
     const isSidebar = e.target.closest(".sidebar");
     const isModal = e.target.closest(".modal");
     const isPagination = e.target.closest(".pagination");
+    const isQueuePanel = e.target.closest(".queue-panel");
 
-    if(!isRow && !isSidebar && !isModal && !isPagination){
+    if(!isRow && !isSidebar && !isModal && !isPagination && !isQueuePanel){
         clearSelection();
         clearUserSelection();
     }
