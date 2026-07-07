@@ -110,12 +110,15 @@ function normalize_user(array $row, string $status = 'offline'): array
 
 function priority_score(array $item): float
 {
-    $weights = ['regular' => 50, 'pwd' => 100, 'senior' => 80, 'mother' => 70];
+    global $config;
+    $weights = $config['priority_weights'] ?? ['regular' => 50, 'pwd' => 100, 'senior' => 80, 'mother' => 70];
+    $agingRate = (float) ($config['aging_rate'] ?? 4.0);
+
     $priority = strtolower((string) $item['priority']);
     $base = $weights[$priority] ?? 50;
     $created = strtotime((string) $item['created_at']);
     $minutes = max((time() - ($created ?: time())) / 60, 0);
-    return $base + ($minutes * 4.0);
+    return $base + ($minutes * $agingRate);
 }
 
 function item_with_score(array $row): array

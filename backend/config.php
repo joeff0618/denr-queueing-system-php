@@ -8,4 +8,11 @@ return [
     'db_pass' => 'password',
     'timezone' => 'Asia/Manila',
     'max_available_cards' => 30,
+    'aging_rate' => 4.0,
+    'priority_weights' => [
+        'pwd' => 100,
+        'senior' => 80,
+        'mother' => 70,
+        'regular' => 50,
+    ],
 ];
