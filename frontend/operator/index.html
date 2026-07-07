@@ -58,10 +58,7 @@
             <span>Statistics</span>
         </button>
 
-        <button id="flashSelectedBtn" onclick="flashSelected()" class="hidden-sidebar-btn">
-            <img src="../assets/svg/tv-alt-svgrepo-com.svg" alt="Add Entry Icon" class="sidebar-icon">
-            <span>Flash Queue Number</span>
-        </button>
+
 
         <button id="editSelectedBtn" onclick="openSelectedEdit()" class="hidden-sidebar-btn">
             <img src="../assets/svg/pen-square-svgrepo-com.svg" alt="Add Entry Icon" class="sidebar-icon">
@@ -174,7 +171,7 @@
             </div>
             <div class="queue-actions">
                 <div class="buttonGrp">
-                    <button onclick="callNext()">Flash Next</button>
+                    <button onclick="flashSelected()">Flash</button>
                     <button onclick="skip('pending')">Skip</button>
                 </div>
                 <button onclick="updateCurrent('forwarded')">Forward to Division</button>

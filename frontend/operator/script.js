@@ -775,21 +775,22 @@ function selectRow(id, rowElement){
     document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
     rowElement.classList.add("selected");
     selectedEntryId = id;
-    document.getElementById("flashSelectedBtn").classList.add("show");
     document.getElementById("editSelectedBtn").classList.add("show");
     document.getElementById("deleteSelectedBtn").classList.add("show");
 }
 
 function clearSelection(){
     selectedEntryId = null;
-    document.getElementById("flashSelectedBtn").classList.remove("show");
     document.getElementById("editSelectedBtn").classList.remove("show");
     document.getElementById("deleteSelectedBtn").classList.remove("show");
     document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
 }
 
 async function flashSelected() {
-    if(!selectedEntryId) return;
+    if(!selectedEntryId) {
+        alert("Please select a queue item from the table first.");
+        return;
+    }
     try {
         // Check if someone is already being processed
         const todayRes = await fetch(`${API_BASE}/today`);
@@ -899,86 +900,81 @@ toggleBtn.addEventListener("click", () => {
     sidebar.classList.toggle("collapsed");
 });
 
-/* =========== PANEL BUTTONS ============= */
-async function callNext() {
+async function skip(status) {
+    if (!selectedEntryId) {
+        alert("Please select a queue item from the table first.");
+        return;
+    }
     try {
-        // Check if someone is already being processed
         const todayRes = await fetch(`${API_BASE}/today`);
         const queue = await todayRes.json();
-        const alreadyProcessing = queue.find(q => q.status.toLowerCase() === "processing");
-        if (alreadyProcessing) {
-            alert(`Card #${alreadyProcessing.queue_no} is still being processed. Please complete or cancel it first.`);
+        const item = queue.find(q => q.id === selectedEntryId);
+
+        if (!item) {
+            alert("Selected queue item not found.");
             return;
         }
 
-        const response = await fetch(`${API_BASE}/call-next`, {
-            method: "PUT"
+        if (item.status.toLowerCase() !== "processing") {
+            alert("You can only skip items that are currently processing.");
+            return;
+        }
+
+        const response = await fetch(`${API_BASE}/status/${item.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "pending" })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            alert(errorData.detail || "No pending items in the queue.");
+            alert("Error: " + errorData.detail);
             return;
         }
 
-        const nextEntry = await response.json();
-        document.getElementById("currentQNo").textContent = nextEntry.queue_no;
+        document.getElementById("currentQNo").textContent = "-";
         await loadQueue();
+        clearSelection();
     } catch (error) {
-        console.error("Error calling next queue:", error);
+        console.error("Error skipping queue:", error);
     }
 }
 
-async function skip(status) {
-     try {
-        // Use the atomic skip-and-call-next endpoint so the skipped person
-        // is excluded from the next selection.
-        const response = await fetch(`${API_BASE}/skip-and-call-next`, {
-            method: "PUT"
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert(errorData.detail || "No entry is currently being processed.");
-            return;
-        }
-
-        const result = await response.json();
-
-        if (result.queue_no) {
-            // A next person was found and is now processing
-            document.getElementById("currentQNo").textContent = result.queue_no;
-        } else {
-            // Skipped but no one else is waiting
-            document.getElementById("currentQNo").textContent = "-";
-            alert(result.detail || "Skipped, but no one else is waiting.");
-        }
-
-        await loadQueue();
-    } catch (error) {
-        console.error("Error skipping queue:", error);
-    }   
-}
-
 async function updateCurrent(status) {
+    if (!selectedEntryId) {
+        alert("Please select a queue item from the table first.");
+        return;
+    }
     try {
-        const response = await fetch(`${API_BASE}/today`);
-        const queue = await response.json();
-        const current = queue.find(item => item.status.toLowerCase() === "processing");
+        const todayRes = await fetch(`${API_BASE}/today`);
+        const queue = await todayRes.json();
+        const item = queue.find(q => q.id === selectedEntryId);
 
-        if (!current) {
-            alert("No entry is currently being processed.");
+        if (!item) {
+            alert("Selected queue item not found.");
             return;
         }
 
-        await fetch(`${API_BASE}/status/${current.id}`, {
+        if (item.status.toLowerCase() !== "processing") {
+            alert("You can only update status for items that are currently processing.");
+            return;
+        }
+
+        const response = await fetch(`${API_BASE}/status/${item.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: status })
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + errorData.detail);
+            return;
+        }
+
         document.getElementById("currentQNo").textContent = "-";
         await loadQueue();
+        clearSelection();
     } catch (error) {
         console.error(`Error setting status to ${status}:`, error);
     }
