@@ -18,15 +18,25 @@ buttons.forEach(button => {
 });
 
 // Custom Kiosk Modal logic
-function showModal(title, message, isSuccess = true) {
+function showModal(title, message, isSuccess = true, queueNo = null) {
     const modal = document.getElementById("customModal");
     const modalTitle = document.getElementById("modalTitle");
     const modalMessage = document.getElementById("modalMessage");
     const iconContainer = document.getElementById("modalIconContainer");
     const icon = document.getElementById("modalIcon");
+    const queueNoContainer = document.getElementById("modalQueueNoContainer");
 
     modalTitle.textContent = title;
     modalMessage.textContent = message;
+
+    if (queueNoContainer) {
+        if (queueNo !== null) {
+            queueNoContainer.textContent = queueNo;
+            queueNoContainer.style.display = "inline-flex";
+        } else {
+            queueNoContainer.style.display = "none";
+        }
+    }
 
     if (isSuccess) {
         iconContainer.className = "modal-icon-container success";
@@ -85,8 +95,9 @@ document.getElementById("entryForm")
         const newItem = await response.json();
         showModal(
             "Ticket Generated!", 
-            `Ticket Number: ${newItem.queue_no}\nName: ${newItem.client_name}\n\nPlease take card #${newItem.queue_no} and wait to be called.`, 
-            true
+            `Name: ${newItem.client_name}\n\nYou must get this queue number card from the front desk and wait to be called.`, 
+            true,
+            newItem.queue_no
         );
         resetPage();
     } catch (err) {

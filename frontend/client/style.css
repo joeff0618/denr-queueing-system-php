@@ -417,6 +417,21 @@ body::before {
     transform: scale(0.98);
 }
 
+.modal-queue-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    background-color: var(--primary);
+    color: #ffffff;
+    font-size: 3.8rem;
+    font-weight: 800;
+    border-radius: 16px;
+    margin: 8px auto;
+    box-shadow: 0 4px 15px rgba(21, 128, 61, 0.3);
+}
+
 /* Kiosk / Responsive Portrait Display (1080x1920) — scale entry-container 2x */
 @media (max-width: 1080px) and (min-height: 1600px) and (orientation: portrait) {
     :root {
