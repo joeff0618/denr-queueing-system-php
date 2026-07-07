@@ -174,3 +174,23 @@ setInterval(() => {
   })
   .catch(err => console.error("Error fetching announcement:", err));
 }, 1000);
+
+// Unlock Audio & SpeechSynthesis on overlay click
+const overlay = document.getElementById('audio-unlock-overlay');
+if (overlay) {
+    overlay.addEventListener('click', () => {
+        try {
+            const utterance = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(utterance);
+            
+            // Play a silent audio to unlock AudioContext
+            const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+            audio.play().catch(e => console.log(e));
+            
+            console.log("Audio Context and SpeechSynthesis unlocked successfully!");
+        } catch (e) {
+            console.warn(e);
+        }
+        overlay.style.display = 'none';
+    });
+}
