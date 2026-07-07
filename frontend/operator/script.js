@@ -832,6 +832,8 @@ function selectRow(id, rowElement){
     selectedEntryId = id;
     document.getElementById("editSelectedBtn").classList.add("show");
     document.getElementById("deleteSelectedBtn").classList.add("show");
+    const flashBtn = document.getElementById("flashBtn");
+    if (flashBtn) flashBtn.textContent = "Flash";
 }
 
 function clearSelection(){
@@ -839,6 +841,34 @@ function clearSelection(){
     document.getElementById("editSelectedBtn").classList.remove("show");
     document.getElementById("deleteSelectedBtn").classList.remove("show");
     document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+    const flashBtn = document.getElementById("flashBtn");
+    if (flashBtn) flashBtn.textContent = "Flash Next";
+}
+
+async function handleFlashAction() {
+    if (selectedEntryId) {
+        await flashSelected();
+    } else {
+        await callNext();
+    }
+}
+
+async function callNext() {
+    try {
+        const response = await fetch(`${API_BASE}/call-next`, {
+            method: "PUT"
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(errorData.detail || "No pending items in the queue.");
+            return;
+        }
+
+        await loadQueue();
+    } catch (error) {
+        console.error("Error calling next queue:", error);
+    }
 }
 
 async function flashSelected() {
