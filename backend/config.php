@@ -2,10 +2,17 @@
 // Hostinger / shared-hosting database settings.
 // Edit these values after creating your MySQL database in Hostinger hPanel.
 return [
-    'db_host' => 'localhost',
-    'db_name' => 'u667585903_iis',
-    'db_user' => 'u667585903_dave2',
-    'db_pass' => 'iisDave2',
+    'db_host' => '127.0.0.1',
+    'db_name' => 'queue_db',
+    'db_user' => 'root',
+    'db_pass' => 'password',
     'timezone' => 'Asia/Manila',
     'max_available_cards' => 30,
+    'aging_rate' => 4.0,
+    'priority_weights' => [
+        'pwd' => 100,
+        'senior' => 80,
+        'mother' => 70,
+        'regular' => 50,
+    ],
 ];

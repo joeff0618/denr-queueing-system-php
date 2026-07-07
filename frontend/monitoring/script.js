@@ -247,10 +247,6 @@ function applySorting(resetPage = true) {
             return priorityA - priorityB;
         }        
         
-        const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return createdA - createdB;
-        
         let valA, valB;
 
         if (sortKey === "service_time") {
@@ -272,7 +268,10 @@ function applySorting(resetPage = true) {
 
         if (valA < valB) return sortDirection === "asc" ? -1 : 1;
         if (valA > valB) return sortDirection === "asc" ? 1 : -1;
-        return 0;
+        
+        const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return createdA - createdB;
     });
 
     if (resetPage) currentPage = 1;
