@@ -1,0 +1,99 @@
+================================================================================
+                    DENR QUEUEING SYSTEM - CHANGES & PORTING PROMPTS
+================================================================================
+
+This file contains the summary of changes made to the PHP/MySQL version of the 
+DENR Queueing System, along with matching prompts that can be fed directly to a 
+coding agent to apply/port these exact updates to the original Python/FastAPI version.
+
+--------------------------------------------------------------------------------
+1. CLIENT FRONTEND - SELECTION ACTIVE BUTTONS STYLE
+--------------------------------------------------------------------------------
+* PHP Change:
+  Updated the active state for the priority buttons to have a solid green 
+  background with white text/icons and a subtle shadow, making selections 
+  significantly more visible.
+* Agent Prompt for Python Version:
+  "In `frontend/client/style.css`, find the `.priority-btn.active` rule. 
+  Change it so that the active state uses a solid green background (`background: var(--primary);`), 
+  white text (`color: #ffffff;`), and a clean shadow (`box-shadow: 0 4px 15px rgba(21, 128, 61, 0.3);`). 
+  Also add a rule to make the icon inside the active button white: `.priority-btn.active i { color: #ffffff; }`."
+
+--------------------------------------------------------------------------------
+2. MONITORING PORTAL - COLUMN SORTING BUG
+--------------------------------------------------------------------------------
+* PHP Change:
+  Fixed a critical sorting bug where an early `return createdA - createdB;` 
+  bypassed other sorting keys, making all other sort selections (name, status, etc.) 
+  unreachable dead-code.
+* Agent Prompt for Python Version:
+  "In `frontend/monitoring/script.js`, locate the `applySorting` function. 
+  Find the early return statement `return createdA - createdB;` placed before the 
+  sorting key evaluations. Move this `created_at` comparison logic to the very end 
+  of the `.sort()` callback as a fallback tie-breaker when `valA === valB` so that 
+  column-based sorting works correctly."
+
+--------------------------------------------------------------------------------
+3. DASHBOARDS - UNAUTHORIZED USER PAGE FLASH BUG
+--------------------------------------------------------------------------------
+* PHP Change:
+  Added `style="display: none;"` inline on the root `<html>` elements in the 
+  operator and monitoring HTML files. The JS unhides the page only after a 
+  valid profile/session is fetched, preventing unauthorized layout flashing.
+* Agent Prompt for Python Version:
+  "In `frontend/operator/index.html` and `frontend/monitoring/index.html`, 
+  add `style="display: none;"` to the `<html>` tag. This ensures that unauthorized 
+  users navigating directly to the dashboards do not see a split-second flash of 
+  the layouts before the async auth script redirects them back to the login page."
+
+--------------------------------------------------------------------------------
+4. CLIENT FRONTEND - SUCCESS MODAL GENERATED TICKET LAYOUT
+--------------------------------------------------------------------------------
+* PHP Change:
+  Added a dedicated ticket display square (white text on a green background) in 
+  the Success Modal and updated the notification copy advising users to get the 
+  matching physical card from the front desk.
+* Agent Prompt for Python Version:
+  "1. In `frontend/client/index.html`, add `<div id="modalQueueNoContainer" class="modal-queue-box" style="display: none;"></div>` 
+     directly between the `h3` title and the `p` message inside the `customModal` markup.
+   2. In `frontend/client/style.css`, style the `.modal-queue-box` as a green square background 
+     (`background-color: var(--primary);`), with bold white text (`color: #ffffff;`), font-size `3.8rem`, 
+     centered display (`display: inline-flex; justify-content: center; align-items: center;`), and rounded borders.
+   3. In `frontend/client/script.js`, update `showModal()` to accept an optional `queueNo` parameter. 
+     If provided, display it inside the new container. Update the form submit success handler to pass 
+     `newItem.queue_no` and change the text message to: 'Name: [client_name] \n\n You must get this queue number card from the front desk and wait to be called.'"
+
+--------------------------------------------------------------------------------
+5. BACKEND - KEEP CARDS FOR FORWARDED ITEMS
+--------------------------------------------------------------------------------
+* PHP Change:
+  Modified the card validation and reset logic to include `forwarded` status. 
+  This ensures that when a ticket is forwarded, its physical card number is 
+  retained and not reallocated to new entries.
+* Agent Prompt for Python Version:
+  "In `backend/app/services/queue_services.py`, locate the functions `get_available_cards()` 
+  and `reset_past_days_queue_items()`. Modify their filters to include `Status.FORWARDED` 
+  alongside `Status.PENDING` and `Status.PROCESSING` so that forwarded tickets retain 
+  their card numbers and do not return them to the available cards pool."
+
+--------------------------------------------------------------------------------
+6. OPERATOR DASHBOARD - MULTI-SERVE GRID & SELECTION-BASED ACTIONS
+--------------------------------------------------------------------------------
+* PHP Change:
+  Removed the single-serving restriction, allowing multiple tickets to be 
+  in `processing` status. Replaced the single card text field with an interactive 
+  grid of active processing tickets. Changed Skip, Complete, Cancel, and Forward 
+  buttons to operate strictly on the selected table row, resolving conflicts in 
+  global click event listeners.
+* Agent Prompt for Python Version:
+  "1. In `frontend/operator/index.html`, replace `<strong id="currentQNo">-</strong>` 
+     with a `<div class="number-display" id="operatorNumberDisplay"><div class="number-grid"></div></div>` container.
+   2. In `frontend/operator/style.css`, copy the `.number-display`, `.number-grid`, and `.queue-number` styles 
+     from monitoring panel CSS and style them appropriately.
+   3. In `frontend/operator/script.js`, remove the limit check inside `flashSelected()` that restricts the panel 
+     to only one processing item. Update `updateOperatorDashboard()` to query all `processing` items and render 
+     them as clickable buttons in the new grid container. Selecting a button highlights the row in the table.
+   4. Update `skip()` and `updateCurrent()` in `script.js` to run on `selectedEntryId` and validate their statuses 
+     with custom alert warnings (e.g. 'Status must be PROCESSING to change to PENDING').
+   5. Modify the global click event listener on the document to ignore clicks inside `.queue-panel` (e.g. using 
+     `e.target.closest(".queue-panel")`), preventing actions from clearing the selection."
