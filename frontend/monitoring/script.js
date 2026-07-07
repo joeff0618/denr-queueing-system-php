@@ -13,6 +13,16 @@ let userDivision = localStorage.getItem("userDiv");   // Get assigned division
 let selectedEntryId = null;
 let currentEntryId = null;
 let currentQueueNumber = null;
+let knownForwardedIds = null;
+
+function playChime() {
+    try {
+        const audio = new Audio('../assets/sound/freesound_community-chime-sound-7143.mp3');
+        audio.play().catch(err => console.warn("Failed to play audio:", err));
+    } catch (e) {
+        console.error("Audio error:", e);
+    }
+}
 
 function updateDivisionBadge() {
     const divBadge = document.getElementById("divisionBadge");
@@ -105,6 +115,19 @@ function updateMonitoringDashboard() {
             item.status.toLowerCase() === "forwarded" &&
             item.division.toLowerCase() === userDivision.toLowerCase()
     );
+
+    if (knownForwardedIds !== null) {
+        let hasNew = false;
+        items.forEach(item => {
+            if (!knownForwardedIds.has(item.id)) {
+                hasNew = true;
+            }
+        });
+        if (hasNew) {
+            playChime();
+        }
+    }
+    knownForwardedIds = new Set(items.map(item => item.id));
 
     const display = document.getElementById("numberDisplay");
     const completeBtn = document.getElementById("completeBtn");
