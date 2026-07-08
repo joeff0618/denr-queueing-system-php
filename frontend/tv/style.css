@@ -309,7 +309,7 @@ body::before {
 }
 #queue-col-smd::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
 #queue-col-lpdd::before { background: linear-gradient(90deg, #d97706, #fbbf24); }
-#queue-col-cashier::before { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+#queue-col-a0504::before { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
 
 .queue-column-header {
   text-align: center;
@@ -322,7 +322,7 @@ body::before {
 
 #queue-header-smd { background-color: rgba(213, 213, 255, 0.5); }
 #queue-header-lpdd { background-color: rgba(255, 237, 213, 0.5); }
-#queue-header-cashier { background-color: rgba(254, 213, 255, 0.5); }
+#queue-header-a0504 { background-color: rgba(254, 213, 255, 0.5); }
 
 
 .queue-column-body {

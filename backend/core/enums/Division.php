@@ -7,7 +7,7 @@ enum Division: string
     case R_SMD = 'r-smd';
     case SR_SMD = 'sr-smd';
     case LPDD = 'lpdd';
-    case CASHIER = 'cashier';
+    case A0504 = 'a0504';
     case LOBBY = 'lobby';
     case LEGAL = 'legal';
     case ADMIN = 'admin';

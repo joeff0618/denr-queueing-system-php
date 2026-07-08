@@ -36,7 +36,7 @@ function updateDisplay(activeItems) {
   document.getElementById('queue-body-regular-smd').innerHTML = '';
   document.getElementById('queue-body-sr-smd').innerHTML = '';
   document.getElementById('queue-body-lpdd').innerHTML = '';
-  document.getElementById('queue-body-cashier').innerHTML = '';
+  document.getElementById('queue-body-a0504').innerHTML = '';
   document.getElementById('sidebar-in-queue').innerHTML = '';
   document.getElementById('sidebar-priority').innerHTML = '';
   document.getElementById('office-body').innerHTML = '';
@@ -46,7 +46,7 @@ function updateDisplay(activeItems) {
   if (officeHeader) officeHeader.innerText = 'OFFICE';
 
   const officeDivisions = ['legal', 'admin', 'pmd', 'rscig', 'lobby'];
-  const mainDivisions = ['smd', 'lpdd', 'cashier'];
+  const mainDivisions = ['smd', 'lpdd', 'a0504'];
 
   // Track the absolute next pending item across all divisions (priority items first)
   let absoluteNextPending = null;
@@ -166,7 +166,7 @@ function updateDisplay(activeItems) {
   }
 
   // Set the dynamic layout classes based on child counts
-  const bodyIds = ['queue-body-regular-smd', 'queue-body-sr-smd', 'queue-body-lpdd', 'queue-body-cashier', 'office-body'];
+  const bodyIds = ['queue-body-regular-smd', 'queue-body-sr-smd', 'queue-body-lpdd', 'queue-body-a0504', 'office-body'];
   bodyIds.forEach(id => {
       const body = document.getElementById(id);
       if (body) {
