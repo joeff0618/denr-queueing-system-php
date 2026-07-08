@@ -594,7 +594,7 @@ td:nth-child(5) {
     color: #243447;
 }
 
-.div-badge.smd { background: #dbeafe; }
+.div-badge.smd, .div-badge.r-smd, .div-badge.sr-smd { background: #dbeafe; }
 .div-badge.lpdd { background: #fff1d6; }
 .div-badge.cashier { background: #fce7f3; }
 .div-badge.legal { background: #fef9c3; }

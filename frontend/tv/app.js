@@ -33,7 +33,8 @@ function updateClock() {
 // Fetches active queue data and updates the display
 function updateDisplay(activeItems) {
   // Clear current displays
-  document.getElementById('queue-body-smd').innerHTML = '';
+  document.getElementById('queue-body-regular-smd').innerHTML = '';
+  document.getElementById('queue-body-sr-smd').innerHTML = '';
   document.getElementById('queue-body-lpdd').innerHTML = '';
   document.getElementById('queue-body-cashier').innerHTML = '';
   document.getElementById('sidebar-in-queue').innerHTML = '';
@@ -67,13 +68,13 @@ function updateDisplay(activeItems) {
           }
         
           if (officeDivisions.includes(lowerDiv)) {
-              // Show item in the top office announcement area
-              document.getElementById('office-body').innerHTML += `
+              // Show item in the top office announcement area - PREPENDED
+              document.getElementById('office-body').innerHTML = `
                 <div class="queue-item now-serving">
                   <span class="now-serving-label">NOW SERVING</span>
                   ${item.queue_no}
                 </div>
-              `;
+              ` + document.getElementById('office-body').innerHTML;
               
               // Change the "OFFICE" text to the division name
               if (officeHeader) {
@@ -82,16 +83,26 @@ function updateDisplay(activeItems) {
 
           } else {
               // Post to specific division columns (SMD, LPDD, CASHIER)
-              const depBodyId = `queue-body-${lowerDiv}`;
+              let depBodyId = `queue-body-${lowerDiv}`;
+              if (lowerDiv === 'smd' || lowerDiv === 'r-smd' || lowerDiv === 'sr-smd') {
+                  if (lowerDiv === 'r-smd') {
+                      depBodyId = 'queue-body-regular-smd';
+                  } else if (lowerDiv === 'sr-smd') {
+                      depBodyId = 'queue-body-sr-smd';
+                  } else {
+                      depBodyId = item.priority === 'regular' ? 'queue-body-regular-smd' : 'queue-body-sr-smd';
+                  }
+              }
               const depBody = document.getElementById(depBodyId);
               
               if (depBody) {
-                  depBody.innerHTML += `
+                  // Prepend to the first of the box instead of appending
+                  depBody.innerHTML = `
                     <div class="queue-item now-serving">
                       <span class="now-serving-label">NOW SERVING</span>
                       ${item.queue_no}
                     </div>
-                  `;
+                  ` + depBody.innerHTML;
               }
           }
       } else if (item.status === 'pending') {
@@ -119,7 +130,24 @@ function updateDisplay(activeItems) {
   // Add "Coming up next" for the single absolute next pending division
   if (absoluteNextPending) {
       const lowerDiv = absoluteNextPending.division.toLowerCase();
-      if (mainDivisions.includes(lowerDiv)) {
+      if (lowerDiv === 'smd' || lowerDiv === 'r-smd' || lowerDiv === 'sr-smd') {
+          let subDiv = '';
+          if (lowerDiv === 'r-smd') {
+              subDiv = 'regular-smd';
+          } else if (lowerDiv === 'sr-smd') {
+              subDiv = 'sr-smd';
+          } else {
+              subDiv = absoluteNextPending.priority === 'regular' ? 'regular-smd' : 'sr-smd';
+          }
+          const depBody = document.getElementById(`queue-body-${subDiv}`);
+          if (depBody) {
+              depBody.innerHTML += `
+                <div class="coming-up-next">
+                  Coming Up Next: <strong>${absoluteNextPending.queue_no}</strong>
+                </div>
+              `;
+          }
+      } else if (mainDivisions.includes(lowerDiv)) {
           const depBody = document.getElementById(`queue-body-${lowerDiv}`);
           if (depBody) {
               depBody.innerHTML += `
@@ -136,6 +164,25 @@ function updateDisplay(activeItems) {
           `;
       }
   }
+
+  // Set the dynamic layout classes based on child counts
+  const bodyIds = ['queue-body-regular-smd', 'queue-body-sr-smd', 'queue-body-lpdd', 'queue-body-cashier', 'office-body'];
+  bodyIds.forEach(id => {
+      const body = document.getElementById(id);
+      if (body) {
+          const nowServingCount = body.querySelectorAll('.queue-item.now-serving').length;
+          body.classList.remove('count-1', 'count-2', 'count-3', 'count-4');
+          if (nowServingCount === 1) {
+              body.classList.add('count-1');
+          } else if (nowServingCount === 2) {
+              body.classList.add('count-2');
+          } else if (nowServingCount === 3) {
+              body.classList.add('count-3');
+          } else if (nowServingCount >= 4) {
+              body.classList.add('count-4');
+          }
+      }
+  });
 }
 
 let currentAnnouncement = "";

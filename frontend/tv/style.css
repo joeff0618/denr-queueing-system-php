@@ -63,25 +63,33 @@ body::before {
 /* ====== TOP SECTION ====== */
 .top-section {
   display: grid;
-  grid-template-columns: auto 1fr 1fr;
-  gap: 1.25rem;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
   min-height: 0;
   align-items: stretch;
 }
 
+.logo-datetime-box {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  min-height: 0;
+}
 
 .logo {
-  width: 18rem;
-  height: 18rem;
+  height: auto;
+  max-height: 12rem;
+  width: auto;
   object-fit: contain;
-  margin-left: 2.5vw;
-  align-self: center;
+  margin-left: 1rem;
 }
 
 .datetime-announcement-area {
+  flex: 1;
   display: grid;
   grid-template-rows: 1fr;
   gap: 1rem;
+  min-width: 0;
 }
 
 .datetime-block {
@@ -218,20 +226,49 @@ body::before {
 /* ====== BOTTOM SECTION ====== */
 .bottom-section {
   display: grid;
-  grid-template-columns: 3fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr;
   gap: 1rem;
   min-height: 0;
 }
 
-/* -- Queue Columns Container -- */
+/* -- Queue Columns Container (Not used, but kept for compatibility) -- */
 .queue-columns {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  background: transparent;
-  border-radius: 0.75rem;
-  padding: 0;
-  gap: 0.625rem;
-  overflow: hidden;
+  display: none;
+}
+
+/* -- SMD Sub-columns -- */
+.smd-sub-columns {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.smd-sub-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.smd-sub-column:first-child {
+  border-right: 1px dashed rgba(0, 0, 0, 0.15);
+}
+
+/* -- SMD Split Main Header -- */
+.smd-split-header {
+  display: flex !important;
+  padding: 0 !important;
+  align-items: stretch;
+}
+
+.smd-header-col {
+  flex: 1;
+  padding: 1rem 0.5rem 0.75rem;
+}
+
+.smd-header-divider {
+  width: 1px;
+  background-color: rgba(0, 0, 0, 0.15);
 }
 
 /* -- Individual Queue Column -- */
@@ -483,4 +520,85 @@ body::before {
 .sidebar-col::-webkit-scrollbar-thumb {
   background: #bbb;
   border-radius: 0.25rem;
+}
+
+/* ---------- Responsive Now-Serving Layouts ---------- */
+
+/* Count 1: Full-height item */
+.queue-column-body.count-1,
+.office-column-body.count-1 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.queue-column-body.count-1 .queue-item.now-serving,
+.office-column-body.count-1 .queue-item.now-serving {
+  flex: 1;
+  font-size: 15rem;
+}
+.queue-column-body.count-1 .coming-up-next,
+.office-column-body.count-1 .coming-up-next {
+  margin-top: auto;
+}
+
+/* Count 2: Two vertically stacked items (each half height) */
+.queue-column-body.count-2,
+.office-column-body.count-2 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.5rem;
+}
+.queue-column-body.count-2 .queue-item.now-serving,
+.office-column-body.count-2 .queue-item.now-serving {
+  flex: 1;
+  font-size: 9rem;
+  padding: 0.5rem;
+}
+.queue-column-body.count-2 .now-serving-label,
+.office-column-body.count-2 .now-serving-label {
+  font-size: 1.1rem;
+  margin-bottom: -0.25rem;
+}
+.queue-column-body.count-2 .coming-up-next,
+.office-column-body.count-2 .coming-up-next {
+  margin-top: auto;
+}
+
+/* Count 3 & 4: 2x2 grid */
+.queue-column-body.count-3,
+.office-column-body.count-3,
+.queue-column-body.count-4,
+.office-column-body.count-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100%;
+  gap: 0.5rem;
+}
+.queue-column-body.count-3 .queue-item.now-serving,
+.office-column-body.count-3 .queue-item.now-serving,
+.queue-column-body.count-4 .queue-item.now-serving,
+.office-column-body.count-4 .queue-item.now-serving {
+  height: 100%;
+  font-size: 8.5rem;
+  padding: 0.5rem;
+}
+.queue-column-body.count-3 .now-serving-label,
+.office-column-body.count-3 .now-serving-label,
+.queue-column-body.count-4 .now-serving-label,
+.office-column-body.count-4 .now-serving-label {
+  font-size: 0.9rem;
+  margin-bottom: -0.1rem;
+  letter-spacing: 0.1rem;
+}
+.queue-column-body.count-3 .coming-up-next,
+.office-column-body.count-3 .coming-up-next,
+.queue-column-body.count-4 .coming-up-next,
+.office-column-body.count-4 .coming-up-next {
+  display: none;
+}
+.queue-column-body.count-4 .queue-item.now-serving:nth-child(n+5),
+.office-column-body.count-4 .queue-item.now-serving:nth-child(n+5) {
+  display: none;
 }

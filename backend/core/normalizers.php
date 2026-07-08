@@ -3,16 +3,22 @@ declare(strict_types=1);
 
 function normalize_status(?string $status): string
 {
-    return strtolower((string) $status);
+    $val = strtolower((string) $status);
+    $enum = Status::tryFrom($val);
+    return $enum ? $enum->value : $val;
 }
 
 function normalize_division(?string $division): string
 {
-    return strtolower((string) $division);
+    $val = strtolower((string) $division);
+    $enum = Division::tryFrom($val);
+    return $enum ? $enum->value : $val;
 }
 
 function normalize_item(array $row): array
 {
+    $pVal = strtolower((string) $row['priority']);
+    $priority = PriorityType::tryFrom($pVal)?->value ?? $pVal;
     return [
         'id' => (int) $row['id'],
         'queue_no' => isset($row['queue_no']) ? (int) $row['queue_no'] : null,
@@ -20,7 +26,7 @@ function normalize_item(array $row): array
         'purpose' => $row['purpose'],
         'status' => normalize_status($row['status']),
         'division' => normalize_division($row['division']),
-        'priority' => strtolower((string) $row['priority']),
+        'priority' => $priority,
         'created_at' => $row['created_at'],
         'completed_at' => $row['completed_at'],
         'skip_count' => (int) ($row['skip_count'] ?? 0),
@@ -43,7 +49,12 @@ function normalize_user(array $row, string $status = 'offline'): array
 function priority_score(array $item): float
 {
     global $config;
-    $weights = $config['priority_weights'] ?? ['regular' => 50, 'pwd' => 100, 'senior' => 80, 'mother' => 70];
+    $weights = $config['priority_weights'] ?? [
+        PriorityType::REGULAR->value => 50,
+        PriorityType::PWD->value => 100,
+        PriorityType::SENIOR->value => 80,
+        PriorityType::MOTHER->value => 70
+    ];
     $agingRate = (float) ($config['aging_rate'] ?? 4.0);
 
     $priority = strtolower((string) $item['priority']);
@@ -56,7 +67,7 @@ function priority_score(array $item): float
 function item_with_score(array $row): array
 {
     $item = normalize_item($row);
-    if ($item['status'] === 'pending') {
+    if ($item['status'] === Status::PENDING->value) {
         $item['effective_priority'] = round(priority_score($item), 1);
     }
     return $item;

@@ -10,6 +10,17 @@ let sortKey = "created_at";
 let sortDirection = "desc"; // "asc" or "desc"
 let userDivision = localStorage.getItem("userDiv");   // Get assigned division
 
+function matchesDivision(itemDiv) {
+    if (!itemDiv) return false;
+    const lowerItemDiv = itemDiv.toLowerCase();
+    const lowerUserDiv = (userDivision || "").toLowerCase();
+    
+    if (lowerUserDiv === 'smd') {
+        return lowerItemDiv === 'smd' || lowerItemDiv === 'r-smd' || lowerItemDiv === 'sr-smd';
+    }
+    return lowerItemDiv === lowerUserDiv;
+}
+
 let selectedEntryId = null;
 let currentEntryId = null;
 let currentQueueNumber = null;
@@ -92,7 +103,7 @@ async function loadAllData(resetPage = true) {
 
         // Filter based on division
         const filteredData = data.filter(
-            item => item.division?.toLowerCase() === userDivision
+            item => matchesDivision(item.division)
         );
 
         allData = filteredData;
@@ -113,7 +124,7 @@ function updateMonitoringDashboard() {
     const items = allData.filter(
         item =>
             item.status.toLowerCase() === "forwarded" &&
-            item.division.toLowerCase() === userDivision.toLowerCase()
+            matchesDivision(item.division)
     );
 
     if (knownForwardedIds !== null) {

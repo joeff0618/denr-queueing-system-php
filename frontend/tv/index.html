@@ -38,9 +38,9 @@
 
 		<!-- ====== TOP SECTION ====== -->
 		<section class="top-section" id="top-section">
-			 <img src="../assets/img/logo.png"
-				alt="DENR Logo"	class="logo" id="denr-logo">
-
+			<!-- Box 1 (grid size 2): Logo + Date/Time/Announcement -->
+			<div class="logo-datetime-box" id="logo-datetime-box">
+				<img src="../assets/img/logo.png" alt="DENR Logo" class="logo" id="denr-logo">
 				<div class="datetime-announcement-area" id="datetime-announcement-area">
 					<div class="datetime-block" id="datetime-block">
 						<div class="date-text" id="date-display">10 SEPTEMBER 2026</div>
@@ -51,43 +51,15 @@
 						<div class="announcement-body" id="announcement-body"></div>
 					</div>
 				</div>
+			</div>
 
+			<!-- Box 2 (grid size 1): Office -->
 			<div class="dynamic-office" id="dynamic-office">
 				<div class="office-column-header" id="office-header">OFFICE</div>
-					<div class="office-column-body" id="office-body"></div>
+				<div class="office-column-body" id="office-body"></div>
 			</div>
 
-		</section>
-
-		<!-- ====== BOTTOM SECTION ====== -->
-		<section class="bottom-section" id="bottom-section">
-			<!-- Queue Columns (SMD, LPDD, CASHIER) -->
-			<div class="queue-columns" id="queue-columns">
-
-				<!-- SMD Column -->
-				<div class="queue-column" id="queue-col-smd">
-					<div class="queue-column-header" id="queue-header-smd">SMD</div>
-					<div class="queue-column-body" id="queue-body-smd">
-					</div>
-				</div>
-
-				<!-- LPDD Column -->
-				<div class="queue-column" id="queue-col-lpdd">
-					<div class="queue-column-header" id="queue-header-lpdd">LPDD</div>
-					<div class="queue-column-body" id="queue-body-lpdd">
-						<!-- Queue items will be dynamically inserted here -->
-					</div>
-				</div>
-
-				<!-- CASHIER Column -->
-				<div class="queue-column" id="queue-col-cashier">
-					<div class="queue-column-header" id="queue-header-cashier">CASHIER</div>
-					<div class="queue-column-body" id="queue-body-cashier">
-					</div>
-				</div>
-			</div>
-
-			<!-- Sidebar: In Queue + Priority -->
+			<!-- Box 3 (grid size 1): Sidebar (In Queue + Priority) -->
 			<div class="sidebar" id="sidebar">
 				<div class="sidebar-header">
 					<div class="sidebar-header-cell">In Queue</div>
@@ -98,6 +70,46 @@
 					</div>
 					<div class="sidebar-col" id="sidebar-priority">
 					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ====== BOTTOM SECTION ====== -->
+		<section class="bottom-section" id="bottom-section">
+			<!-- Box 1 (grid size 2): Merged SMD Box with Regular-SMD and SR-SMD sub-columns -->
+			<div class="queue-column" id="queue-col-smd">
+				<div class="queue-column-header smd-split-header" id="queue-header-smd">
+					<div class="smd-header-col">Regular-SMD</div>
+					<div class="smd-header-divider"></div>
+					<div class="smd-header-col">SR-SMD</div>
+				</div>
+				<div class="smd-sub-columns">
+					<div class="smd-sub-column">
+						<div class="queue-column-body" id="queue-body-regular-smd">
+							<!-- SMD Regular items will be dynamically inserted here -->
+						</div>
+					</div>
+					<div class="smd-sub-column">
+						<div class="queue-column-body" id="queue-body-sr-smd">
+							<!-- SMD SR items will be dynamically inserted here -->
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Box 2 (grid size 1): LPDD Column (maintaining LPDD color code) -->
+			<div class="queue-column" id="queue-col-lpdd">
+				<div class="queue-column-header" id="queue-header-lpdd">LPDD</div>
+				<div class="queue-column-body" id="queue-body-lpdd">
+					<!-- LPDD items will be dynamically inserted here -->
+				</div>
+			</div>
+
+			<!-- Box 3 (grid size 1): Cashier Column ("A0504", taking cashier color code, same size as LPDD) -->
+			<div class="queue-column" id="queue-col-cashier">
+				<div class="queue-column-header" id="queue-header-cashier">A0504</div>
+				<div class="queue-column-body" id="queue-body-cashier">
+					<!-- Cashier items will be dynamically inserted here -->
 				</div>
 			</div>
 		</section>

@@ -7,7 +7,7 @@ function reset_past_cards(PDO $pdo): void
     $stmt = $pdo->prepare(
         "UPDATE queueing_queue_items
          SET queue_no = NULL
-         WHERE LOWER(status) IN ('pending', 'processing', 'forwarded')
+         WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "')
            AND created_at < ?
            AND queue_no IS NOT NULL"
     );
@@ -30,15 +30,15 @@ function update_status(PDO $pdo, int $id, string $status): ?array
     }
 
     $status = strtolower($status);
-    $completedAt = in_array($status, ['completed', 'cancelled'], true) ? date('Y-m-d H:i:s.u') : null;
+    $completedAt = in_array($status, [Status::COMPLETED->value, Status::CANCELLED->value], true) ? date('Y-m-d H:i:s.u') : null;
     $createdAt = $current['created_at'];
     $skipCount = (int) ($current['skip_count'] ?? 0);
 
-    if ($status === 'pending' && normalize_status($current['status']) === 'processing') {
+    if ($status === Status::PENDING->value && normalize_status($current['status']) === Status::PROCESSING->value) {
         $createdAt = date('Y-m-d H:i:s.u');
         $skipCount++;
     }
-    if ($status === 'processing') {
+    if ($status === Status::PROCESSING->value) {
         $skipCount = 0;
     }
 
@@ -63,7 +63,7 @@ function call_next(PDO $pdo, array $excludeIds = []): ?array
 
     $stmt = $pdo->prepare(
         "SELECT * FROM queueing_queue_items
-         WHERE LOWER(status) = 'pending'
+         WHERE LOWER(status) = '" . Status::PENDING->value . "'
            AND created_at BETWEEN ? AND ?
            $excludeSql"
     );
@@ -78,7 +78,7 @@ function call_next(PDO $pdo, array $excludeIds = []): ?array
         return $score !== 0 ? $score : strcmp((string) $a['created_at'], (string) $b['created_at']);
     });
 
-    return update_status($pdo, (int) $items[0]['id'], 'processing');
+    return update_status($pdo, (int) $items[0]['id'], Status::PROCESSING->value);
 }
 
 function queue_statistics(PDO $pdo, string $range, string $div): array
@@ -108,21 +108,29 @@ function queue_statistics(PDO $pdo, string $range, string $div): array
         return ['data' => []];
     }
 
+    $pending = Status::PENDING->value;
+    $completed = Status::COMPLETED->value;
+    $cancelled = Status::CANCELLED->value;
+
     $where = [
-        "LOWER(status) IN ('completed', 'cancelled', 'pending')",
-        "(CASE WHEN LOWER(status) = 'pending' THEN created_at ELSE completed_at END) >= ?",
+        "LOWER(status) IN ('$completed', '$cancelled', '$pending')",
+        "(CASE WHEN LOWER(status) = '$pending' THEN created_at ELSE completed_at END) >= ?",
     ];
     $params = [$start->format('Y-m-d H:i:s')];
     if ($end) {
-        $where[] = "(CASE WHEN LOWER(status) = 'pending' THEN created_at ELSE completed_at END) < ?";
+        $where[] = "(CASE WHEN LOWER(status) = '$pending' THEN created_at ELSE completed_at END) < ?";
         $params[] = $end->format('Y-m-d H:i:s');
     }
-    if ($div && !in_array(strtolower($div), ['lobby', 'sadmin'], true)) {
-        $where[] = 'LOWER(division) = ?';
-        $params[] = strtolower($div);
+    if ($div && !in_array(strtolower($div), [Division::LOBBY->value, Division::SADMIN->value], true)) {
+        if (strtolower($div) === Division::SMD->value) {
+            $where[] = "LOWER(division) IN ('smd', 'r-smd', 'sr-smd')";
+        } else {
+            $where[] = 'LOWER(division) = ?';
+            $params[] = strtolower($div);
+        }
     }
 
-    $sql = "SELECT DATE_FORMAT(CASE WHEN LOWER(status) = 'pending' THEN created_at ELSE completed_at END, ?) AS date,
+    $sql = "SELECT DATE_FORMAT(CASE WHEN LOWER(status) = '$pending' THEN created_at ELSE completed_at END, ?) AS date,
                    LOWER(division) AS division,
                    LOWER(status) AS status,
                    COUNT(id) AS count
@@ -142,12 +150,12 @@ function queue_statistics(PDO $pdo, string $range, string $div): array
         $count = (int) $row['count'];
         $result[$date] ??= [
             'date' => $date,
-            'completed' => 0,
-            'cancelled' => 0,
-            'pending' => 0,
-            'completed_divisions' => [],
-            'cancelled_divisions' => [],
-            'pending_divisions' => [],
+            $completed => 0,
+            $cancelled => 0,
+            $pending => 0,
+            $completed . '_divisions' => [],
+            $cancelled . '_divisions' => [],
+            $pending . '_divisions' => [],
         ];
         $result[$date][$status] += $count;
         $result[$date][$status . '_divisions'][$division] = $count;
