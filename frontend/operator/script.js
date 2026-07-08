@@ -333,7 +333,7 @@ function togglePanelButtons(status = null) {
             break;
     
         case "completed":
-        case "cancelled":
+        case "deferred":
             setPanelButtonState("flashBtn", false);
             break;
     }
@@ -429,10 +429,10 @@ function renderChart(data) {
     const tooltip = document.getElementById("chartTooltip");
     const chart = document.getElementById("statsChart");
     chart.innerHTML = "";
-    const maxCount = Math.max( ...data.map(item => item.completed + item.cancelled + item.pending), 1 );
+    const maxCount = Math.max( ...data.map(item => item.completed + item.deferred + item.pending), 1 );
 
     data.forEach(item => {
-        const total = item.completed + item.cancelled + item.pending;
+        const total = item.completed + item.deferred + item.pending;
         const container = document.createElement("div");
         container.className = "chart-bar-container";
 
@@ -465,14 +465,14 @@ function renderChart(data) {
             tooltip.style.display = "none";
         });
 
-        const cancelledBar = document.createElement("div");
-        cancelledBar.className = "chart-bar cancelled-bar";
-        cancelledBar.style.height = `${(item.cancelled / maxCount) * 250}px`;
+        const deferredBar = document.createElement("div");
+        deferredBar.className = "chart-bar deferred-bar";
+        deferredBar.style.height = `${(item.deferred / maxCount) * 250}px`;
 
-        cancelledBar.addEventListener("mousemove", e => {
-            let html = `<strong>Cancelled</strong><br>`;
+        deferredBar.addEventListener("mousemove", e => {
+            let html = `<strong>Deferred</strong><br>`;
 
-            Object.entries(item.cancelled_divisions || {})
+            Object.entries(item.deferred_divisions || {})
                 .forEach(([div, count]) => {
                     html += `${div.toUpperCase()}: ${count}<br>`;
                 });
@@ -483,7 +483,7 @@ function renderChart(data) {
             tooltip.style.display = "block";
         });
 
-        cancelledBar.addEventListener("mouseleave", () => {
+        deferredBar.addEventListener("mouseleave", () => {
             tooltip.style.display = "none";
         });
 
@@ -510,7 +510,7 @@ function renderChart(data) {
         });
 
         stack.appendChild(pendingBar);
-        stack.appendChild(cancelledBar);
+        stack.appendChild(deferredBar);
         stack.appendChild(completedBar);
 
         const label = document.createElement("div");
@@ -528,7 +528,7 @@ function renderChart(data) {
 function renderStatsTable(data) {
     const tbody = document.getElementById("statsTableBody");
     const completed = data.reduce( (total, item) => total + item.completed, 0 );
-    const cancelled = data.reduce( (total, item) => total + item.cancelled, 0 );
+    const deferred = data.reduce( (total, item) => total + item.deferred, 0 );
     const pending = data.reduce( (total, item) => total + item.pending, 0 );
     tbody.innerHTML = `
         <tr>
@@ -536,8 +536,8 @@ function renderStatsTable(data) {
             <td>${completed}</td>
         </tr>
         <tr>
-            <td><span style="color:#ef4444;font-weight:600">Cancelled</span></td>
-            <td>${cancelled}</td>
+            <td><span style="color:#ef4444;font-weight:600">Deferred</span></td>
+            <td>${deferred}</td>
         </tr>
         <tr>
             <td><span style="color:#FFE5B4;font-weight:600">Pending</span></td>
@@ -693,8 +693,8 @@ function hideCompletedToggle() {
 }
 
 function compareQueueOrder(a, b) {
-    const aDone = ["completed", "cancelled"].includes(a.status);
-    const bDone = ["completed", "cancelled"].includes(b.status);
+    const aDone = ["completed", "deferred"].includes(a.status);
+    const bDone = ["completed", "deferred"].includes(b.status);
 
     if (aDone && !bDone) return 1;
     if (!aDone && bDone) return -1;
@@ -853,9 +853,9 @@ function updateOperatorDashboard() {
     setText("dashPending", allQueueData.filter(item => item.status === "pending").length);
     setText("dashForwarded", allQueueData.filter(item => item.status === "forwarded").length);
     setText("dashCompleted", allQueueData.filter(item => item.status === "completed").length);
-    setText("dashCancelled", allQueueData.filter(item => item.status === "cancelled").length);
+    setText("dashDeferred", allQueueData.filter(item => item.status === "deferred").length);
     setText("dashPriority", allQueueData.filter(item => item.priority !== "regular" && 
-        item.status !== "completed" && item.status !== "cancelled").length);
+        item.status !== "completed" && item.status !== "deferred").length);
 }
 
 function updateOperatorLastUpdated(message = null) {
@@ -877,7 +877,7 @@ function updateOperatorLastUpdated(message = null) {
 
 function formatOperatorTime(item) {
     if (item.status.toLowerCase() === "completed" || 
-        item.status.toLowerCase() === "cancelled" && item.completed_at) {
+        item.status.toLowerCase() === "deferred" && item.completed_at) {
         const start = new Date(item.created_at);
         const end = new Date(item.completed_at);
         const diffMs = Math.max(0, end - start);

@@ -30,7 +30,7 @@ function update_status(PDO $pdo, int $id, string $status): ?array
     }
 
     $status = strtolower($status);
-    $completedAt = in_array($status, [Status::COMPLETED->value, Status::CANCELLED->value], true) ? date('Y-m-d H:i:s.u') : null;
+    $completedAt = in_array($status, [Status::COMPLETED->value, Status::DEFERRED->value], true) ? date('Y-m-d H:i:s.u') : null;
     $createdAt = $current['created_at'];
     $skipCount = (int) ($current['skip_count'] ?? 0);
 
@@ -110,10 +110,10 @@ function queue_statistics(PDO $pdo, string $range, string $div): array
 
     $pending = Status::PENDING->value;
     $completed = Status::COMPLETED->value;
-    $cancelled = Status::CANCELLED->value;
+    $deferred = Status::DEFERRED->value;
 
     $where = [
-        "LOWER(status) IN ('$completed', '$cancelled', '$pending')",
+        "LOWER(status) IN ('$completed', '$deferred', '$pending')",
         "(CASE WHEN LOWER(status) = '$pending' THEN created_at ELSE completed_at END) >= ?",
     ];
     $params = [$start->format('Y-m-d H:i:s')];
@@ -151,10 +151,10 @@ function queue_statistics(PDO $pdo, string $range, string $div): array
         $result[$date] ??= [
             'date' => $date,
             $completed => 0,
-            $cancelled => 0,
+            $deferred => 0,
             $pending => 0,
             $completed . '_divisions' => [],
-            $cancelled . '_divisions' => [],
+            $deferred . '_divisions' => [],
             $pending . '_divisions' => [],
         ];
         $result[$date][$status] += $count;

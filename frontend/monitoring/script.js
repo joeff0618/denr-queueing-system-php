@@ -271,7 +271,7 @@ function applySorting(resetPage = true) {
             processing: 2,
             pending: 3,
             completed: 4,
-            cancelled: 4
+            deferred: 4
         };
         
         const priorityA = statusPriority[(a.status || "").toLowerCase()] ?? 999;
@@ -644,10 +644,10 @@ function renderChart(data) {
     const tooltip = document.getElementById("chartTooltip");
     const chart = document.getElementById("statsChart");
     chart.innerHTML = "";
-    const maxCount = Math.max( ...data.map(item => item.completed + item.cancelled + item.pending), 1 );
+    const maxCount = Math.max( ...data.map(item => item.completed + item.deferred + item.pending), 1 );
 
     data.forEach(item => {
-        const total = item.completed + item.cancelled + item.pending;
+        const total = item.completed + item.deferred + item.pending;
 
         const container = document.createElement("div");
         container.className = "chart-bar-container";
@@ -663,9 +663,9 @@ function renderChart(data) {
         completedBar.className = "chart-bar completed-bar";
         completedBar.style.height = `${(item.completed / maxCount) * 250}px`;
 
-        const cancelledBar = document.createElement("div");
-        cancelledBar.className = "chart-bar cancelled-bar";
-        cancelledBar.style.height = `${(item.cancelled / maxCount) * 250}px`;
+        const deferredBar = document.createElement("div");
+        deferredBar.className = "chart-bar deferred-bar";
+        deferredBar.style.height = `${(item.deferred / maxCount) * 250}px`;
 
         const pendingBar = document.createElement("div");
         pendingBar.className = "chart-bar pending-bar";
@@ -689,10 +689,10 @@ function renderChart(data) {
             tooltip.style.display = "none";
         });
 
-        cancelledBar.addEventListener("mousemove", e => {
-            let html = `<strong>Cancelled: </strong>`;
+        deferredBar.addEventListener("mousemove", e => {
+            let html = `<strong>Deferred: </strong>`;
 
-            Object.entries(item.cancelled_divisions || {})
+            Object.entries(item.deferred_divisions || {})
                 .forEach(([div, count]) => {
                     html += `${count}<br>`;
                 });
@@ -703,7 +703,7 @@ function renderChart(data) {
             tooltip.style.display = "block";
         });
 
-        cancelledBar.addEventListener("mouseleave", () => {
+        deferredBar.addEventListener("mouseleave", () => {
             tooltip.style.display = "none";
         });
 
@@ -726,7 +726,7 @@ function renderChart(data) {
         });
 
         stack.appendChild(pendingBar);
-        stack.appendChild(cancelledBar);
+        stack.appendChild(deferredBar);
         stack.appendChild(completedBar);
 
         const label = document.createElement("div");
@@ -744,7 +744,7 @@ function renderChart(data) {
 function renderStatsTable(data) {
     const tbody = document.getElementById("statsTableBody");
     const completed = data.reduce( (total, item) => total + item.completed, 0 );
-    const cancelled = data.reduce( (total, item) => total + item.cancelled, 0 );
+    const deferred = data.reduce( (total, item) => total + item.deferred, 0 );
     const pending = data.reduce( (total, item) => total + item.pending, 0 );
     tbody.innerHTML = `
         <tr>
@@ -752,8 +752,8 @@ function renderStatsTable(data) {
             <td>${completed}</td>
         </tr>
         <tr>
-            <td><span style="color:#ef4444;font-weight:600">Cancelled</span></td>
-            <td>${cancelled}</td>
+            <td><span style="color:#ef4444;font-weight:600">Deferred</span></td>
+            <td>${deferred}</td>
         </tr>
         <tr>
             <td><span style="color:#FFE5B4;font-weight:600">Pending</span></td>

@@ -106,8 +106,8 @@
                 <strong id="dashCompleted">0</strong>
             </div>
             <div class="dashboard-card">
-                <span>Cancelled</span>
-                <strong id="dashCancelled">0</strong>
+                <span>Deferred</span>
+                <strong id="dashDeferred">0</strong>
             </div>
             <div class="dashboard-card">
                 <span>Priority</span>
@@ -184,7 +184,7 @@
                 <button id="forwardBtn" onclick="updateCurrent('forwarded')">Forward to Division</button>
                 <div class="buttonGrp">
                     <button id="completeBtn" onclick="updateCurrent('completed')">Complete</button>
-                    <button id="cancelBtn" onclick="updateCurrent('cancelled')">Cancel</button>
+                    <button id="cancelBtn" onclick="updateCurrent('deferred')">Defer</button>
                 </div>
             </div>
         </div>
@@ -385,8 +385,8 @@
             <button type="button" class="status-btn" data-status="completed">
                 Completed
             </button>
-            <button type="button" class="status-btn bottom-btn" data-status="cancelled">
-                Cancelled
+            <button type="button" class="status-btn bottom-btn" data-status="deferred">
+                Deferred
             </button>
         </div>
         <input type="hidden" id="updateStatus" value="pending">
@@ -492,8 +492,8 @@
                         <span>Completed</span>
                     </div>
                     <div class="chart-legend-item">
-                        <span class="chart-legend-color cancelled"></span>
-                        <span>Cancelled</span>
+                        <span class="chart-legend-color deferred"></span>
+                        <span>Deferred</span>
                     </div>
                     <div class="chart-legend-item">
                         <span class="chart-legend-color pending"></span>

@@ -622,7 +622,7 @@ td:nth-child(5) {
     color: #047857;
 }
 
-.status-badge.status-cancelled {
+.status-badge.status-deferred {
     background: #fef2f2;
     color: var(--danger);
 }
@@ -1085,7 +1085,7 @@ textarea {
     background: #22c55e;
 }
 
-.cancelled-bar {
+.deferred-bar {
     background: #ef4444;
 }
 
@@ -1138,7 +1138,7 @@ textarea {
     background: #22c55e;
 }
 
-.chart-legend-color.cancelled {
+.chart-legend-color.deferred {
     background: #ef4444;
 }
 

@@ -7,5 +7,5 @@ enum Status: string
     case PROCESSING = 'processing';
     case FORWARDED = 'forwarded';
     case COMPLETED = 'completed';
-    case CANCELLED = 'cancelled';
+    case DEFERRED = 'deferred';
 }

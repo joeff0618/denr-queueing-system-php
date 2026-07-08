@@ -531,7 +531,7 @@ th.sortable.active-desc {
     color: #047857;
 }
 
-.status-badge.status-cancelled {
+.status-badge.status-deferred {
     background: #fef2f2;
     color: #dc2626;
 }
@@ -966,7 +966,7 @@ tr.priority-row td:first-child {
     background: #22c55e;
 }
 
-.cancelled-bar {
+.deferred-bar {
     background: #ef4444;
 }
 
@@ -1019,7 +1019,7 @@ tr.priority-row td:first-child {
     background: #22c55e;
 }
 
-.chart-legend-color.cancelled {
+.chart-legend-color.deferred {
     background: #ef4444;
 }
 
