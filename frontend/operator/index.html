@@ -124,16 +124,9 @@
                     onkeyup="filterTable()">
             </div>
 
-            <select id="divisionFilter" onchange="filterTable()">
-                <option value="">All Divisions</option>
-                <option value="smd">SMD</option>
-                <option value="lpdd">LPDD</option>
-                <option value="a0504">A0504</option>
-                <option value="legal">Legal</option>
-                <option value="admin">Admin</option>
-                <option value="pmd">PMD</option>
-                <option value="rscig">RSCIG</option>
-            </select>
+            <button class="filter-btn" id="openFilterBtn" onclick="openModal('filterModal')">
+                <i class="ph ph-sliders-horizontal"></i> Filter
+            </button>
 
             <label class="completed-toggle">
                 <input type="checkbox" id="hideCompleted" onchange="hideCompletedToggle()" checked>
@@ -679,6 +672,68 @@
             <button class="delete-btn" style="background: var(--danger); color: white;" onclick="deleteSelectedUser()">Delete</button>
             <button class="cancel-btn" onclick="closeModal('userDeleteModal')">Cancel</button>
         </div>
+    </div>
+</div>
+
+<!-- FILTER MODAL -->
+<div id="filterModal" class="modal">
+    <div class="modal-content">
+        <h2>Filter Queue Items</h2>
+        <form id="filterForm" onsubmit="event.preventDefault(); applyFilterModal();">
+            <div class="form-group">
+                <label for="filterDivision">Division</label>
+                <select id="filterDivision">
+                    <option value="">All Divisions</option>
+                    <option value="smd">SMD (All)</option>
+                    <option value="r-smd">R-SMD</option>
+                    <option value="sr-smd">SR-SMD</option>
+                    <option value="lpdd">LPDD</option>
+                    <option value="a0504">A0504</option>
+                    <option value="legal">Legal</option>
+                    <option value="admin">Admin</option>
+                    <option value="pmd">PMD</option>
+                    <option value="rscig">RSCIG</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="filterPriority">Priority Status</label>
+                <select id="filterPriority">
+                    <option value="">All Priorities</option>
+                    <option value="priority">Priority</option>
+                    <option value="regular">Non-Priority</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="forwarded">Forwarded</option>
+                    <option value="completed">Completed</option>
+                    <option value="deferred">Deferred</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 1rem; width: 100%;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="filterStartDatetime">Start Date & Time</label>
+                    <input type="datetime-local" id="filterStartDatetime">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="filterEndDatetime">End Date & Time</label>
+                    <input type="datetime-local" id="filterEndDatetime">
+                </div>
+            </div>
+
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+                <button type="button" class="clear-filter-btn" onclick="clearFilters()">Clear Filters</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('filterModal')">Cancel</button>
+                <button type="submit" class="save-btn">Apply Filters</button>
+            </div>
+        </form>
     </div>
 </div>
 

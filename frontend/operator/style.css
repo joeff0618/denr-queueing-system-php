@@ -1632,4 +1632,62 @@ textarea {
     box-shadow: 0 4px 15px rgba(15, 118, 110, 0.3);
 }
 
+/* FILTER BUTTON & MODAL */
+.filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 0.5rem 0.875rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.filter-btn.active {
+    background: #e0e7ff;
+    color: #4f46e5;
+    border-color: #c7d2fe;
+}
+
+.filter-btn.active:hover {
+    background: #c7d2fe;
+}
+
+.filter-indicator {
+    width: 8px;
+    height: 8px;
+    background-color: #4f46e5;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.clear-filter-btn {
+    background: transparent;
+    color: #64748b;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: auto;
+}
+
+.clear-filter-btn:hover {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+
 

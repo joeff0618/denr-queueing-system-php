@@ -621,19 +621,103 @@ function filterTable(){
 
 function applyQueueFilters() {
     const search = document.getElementById("searchInput").value.toLowerCase();
-    const div = document.getElementById("divisionFilter").value.toLowerCase();
-    const hideCompleted = document.getElementById("hideCompleted").checked;
+    
+    // Read from modal elements
+    const div = document.getElementById("filterDivision")?.value.toLowerCase() || "";
+    const priorityFilter = document.getElementById("filterPriority")?.value || ""; // "priority" or "regular" or ""
+    const statusFilter = document.getElementById("filterStatus")?.value.toLowerCase() || "";
+    const startDatetimeVal = document.getElementById("filterStartDatetime")?.value || "";
+    const endDatetimeVal = document.getElementById("filterEndDatetime")?.value || "";
+
+    const hideCompleted = document.getElementById("hideCompleted")?.checked;
+
+    const startTime = startDatetimeVal ? new Date(startDatetimeVal).getTime() : null;
+    const endTime = endDatetimeVal ? new Date(endDatetimeVal).getTime() : null;
 
     filteredQueueData = allQueueData.filter(item => {
+        // Search text match
         const text = `${item.id} ${item.queue_no} ${item.client_name} ${item.purpose} ${item.division} ${item.status}`.toLowerCase();
         const matchSearch = !search || text.includes(search);
-        const matchDiv = !div || item.division.toLowerCase() === div;
-        const filterCompleted = !hideCompleted || item.status.toLowerCase() !== "completed";        
-        return matchSearch && matchDiv && filterCompleted;
+
+        // Division match (if "smd" is chosen, match smd, r-smd, and sr-smd)
+        let matchDiv = true;
+        if (div) {
+            const itemDiv = item.division.toLowerCase();
+            if (div === 'smd') {
+                matchDiv = (itemDiv === 'smd' || itemDiv === 'r-smd' || itemDiv === 'sr-smd');
+            } else {
+                matchDiv = (itemDiv === div);
+            }
+        }
+
+        // Priority match
+        let matchPriority = true;
+        if (priorityFilter === "priority") {
+            matchPriority = (item.priority !== "regular");
+        } else if (priorityFilter === "regular") {
+            matchPriority = (item.priority === "regular");
+        }
+
+        // Status match
+        const matchStatus = !statusFilter || item.status.toLowerCase() === statusFilter;
+
+        // Hide completed toggle override
+        const filterCompleted = statusFilter === "completed" || !hideCompleted || item.status.toLowerCase() !== "completed";
+
+        // Datetime range match
+        let matchTime = true;
+        if (item.created_at) {
+            const itemTime = new Date(item.created_at).getTime();
+            if (startTime && itemTime < startTime) matchTime = false;
+            if (endTime && itemTime > endTime) matchTime = false;
+        } else if (startTime || endTime) {
+            matchTime = false;
+        }
+
+        return matchSearch && matchDiv && matchPriority && matchStatus && filterCompleted && matchTime;
     });
 
     sortFilteredQueue();
     renderQueueTable();
+}
+
+function applyFilterModal() {
+    applyQueueFilters();
+    closeModal('filterModal');
+    updateFilterButtonActiveState();
+}
+
+function clearFilters() {
+    if (document.getElementById("filterDivision")) document.getElementById("filterDivision").value = "";
+    if (document.getElementById("filterPriority")) document.getElementById("filterPriority").value = "";
+    if (document.getElementById("filterStatus")) document.getElementById("filterStatus").value = "";
+    if (document.getElementById("filterStartDatetime")) document.getElementById("filterStartDatetime").value = "";
+    if (document.getElementById("filterEndDatetime")) document.getElementById("filterEndDatetime").value = "";
+    
+    applyQueueFilters();
+    updateFilterButtonActiveState();
+    closeModal('filterModal');
+}
+
+function updateFilterButtonActiveState() {
+    const btn = document.getElementById("openFilterBtn");
+    if (!btn) return;
+    
+    const div = document.getElementById("filterDivision")?.value || "";
+    const priority = document.getElementById("filterPriority")?.value || "";
+    const status = document.getElementById("filterStatus")?.value || "";
+    const start = document.getElementById("filterStartDatetime")?.value || "";
+    const end = document.getElementById("filterEndDatetime")?.value || "";
+    
+    const isFiltering = (div || priority || status || start || end);
+    
+    if (isFiltering) {
+        btn.classList.add("active");
+        btn.innerHTML = `<i class="ph ph-sliders-horizontal"></i> Filter <span class="filter-indicator"></span>`;
+    } else {
+        btn.classList.remove("active");
+        btn.innerHTML = `<i class="ph ph-sliders-horizontal"></i> Filter`;
+    }
 }
 
 function sortQueueBy(key) {
