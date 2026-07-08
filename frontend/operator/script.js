@@ -57,6 +57,7 @@ function showPage(id) {
 
 /* ================= INITIAL LOAD ================= */
 
+togglePanelButtons();
 loadQueue();
 loadStatistics("today");
 
@@ -241,6 +242,67 @@ buttons.forEach(button => {
         priorityInput.value = button.dataset.value;
     });
 });
+
+function setPanelButtonState(buttonId, enabled) {
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+
+    btn.disabled = !enabled;
+    btn.setAttribute("aria-disabled", String(!enabled));
+    btn.classList.toggle("is-disabled", !enabled);
+    btn.style.pointerEvents = enabled ? "auto" : "none";
+    btn.style.opacity = enabled ? "1" : "0.6";
+    btn.style.cursor = enabled ? "pointer" : "not-allowed";
+}
+
+function togglePanelButtons(status = null) {
+    const ids = [
+        "skipBtn",
+        "forwardBtn",
+        "completeBtn",
+        "cancelBtn"
+    ];
+
+    ids.forEach(id => setPanelButtonState(id, false));
+
+    const normalizedStatus = (status || "").toLowerCase();
+
+    const enableButton = (id) => setPanelButtonState(id, true);
+
+    switch (normalizedStatus) {
+        case "processing":
+            enableButton("skipBtn");
+            enableButton("forwardBtn");
+            enableButton("completeBtn");
+            enableButton("cancelBtn");
+            break;
+
+        case "pending":
+            enableButton("flashBtn");
+            enableButton("skipBtn");
+            enableButton("forwardBtn");
+            enableButton("completeBtn");
+            enableButton("cancelBtn");
+            break;
+
+        case "forwarded":
+            enableButton("flashBtn");
+            enableButton("completeBtn");
+            enableButton("cancelBtn");
+            break;
+    }
+}
+
+function syncPanelButtonsForSelection() {
+    if (!selectedEntryId) {
+        togglePanelButtons();
+        return;
+    }
+
+    const selectedItem = allQueueData.find(item => item.id === selectedEntryId);
+    togglePanelButtons(selectedItem?.status);
+}
+
 
 /* UTILITIES (MODALS) */
 function openModal(modalId) {
@@ -488,6 +550,7 @@ async function loadQueue(){
         }
 
         allQueueData = queue;
+        syncPanelButtonsForSelection();
         updateOperatorDashboard();
         updateOperatorLastUpdated();
         applyQueueFilters();
@@ -719,6 +782,7 @@ function updateOperatorDashboard() {
                         
                         document.getElementById("editSelectedBtn").classList.add("show");
                         document.getElementById("deleteSelectedBtn").classList.add("show");
+                        syncPanelButtonsForSelection();
                     }
                 });
                 
@@ -733,7 +797,7 @@ function updateOperatorDashboard() {
     };
 
     const firstProc = processingItems[0];
-    setText("currentQNo", firstProc ? firstProc.queue_no : "-");
+    setText("current-qno", firstProc ? firstProc.queue_no : "-");
     setText("dashNowServing", firstProc ? `#${firstProc.queue_no}` : "-");
     setText("dashPending", allQueueData.filter(item => item.status === "pending").length);
     setText("dashForwarded", allQueueData.filter(item => item.status === "forwarded").length);
@@ -832,18 +896,24 @@ function selectRow(id, rowElement){
     selectedEntryId = id;
     document.getElementById("editSelectedBtn").classList.add("show");
     document.getElementById("deleteSelectedBtn").classList.add("show");
+    syncPanelButtonsForSelection();
 }
 
 function clearSelection(){
     selectedEntryId = null;
+    togglePanelButtons();
     document.getElementById("editSelectedBtn").classList.remove("show");
     document.getElementById("deleteSelectedBtn").classList.remove("show");
     document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
 }
 
 async function flashSelected() {
-    if(!selectedEntryId) {
-        alert("Please select a queue item from the table first.");
+    if (!document.getElementById("flashBtn")?.disabled) {
+        if (!selectedEntryId) {
+            alert("Please select a queue item from the table first.");
+            return;
+        }
+    } else {
         return;
     }
     try {
@@ -980,7 +1050,6 @@ async function skip(status) {
             return;
         }
 
-        document.getElementById("currentQNo").textContent = "-";
         await loadQueue();
         clearSelection();
     } catch (error) {
@@ -1012,8 +1081,8 @@ async function updateCurrent(status) {
                 return;
             }
         } else if (targetStatus === "completed") {
-            if (itemStatus !== "processing" && itemStatus !== "pending") {
-                alert("Status must be PROCESSING or PENDING to change to COMPLETED");
+            if (itemStatus !== "processing" && itemStatus !== "pending" && itemStatus !== "forwarded") {
+                alert("Status must be PROCESSING or PENDING or FORWARDED to change to COMPLETED");
                 return;
             }
         }
@@ -1030,7 +1099,6 @@ async function updateCurrent(status) {
             return;
         }
 
-        document.getElementById("currentQNo").textContent = "-";
         await loadQueue();
         clearSelection();
     } catch (error) {

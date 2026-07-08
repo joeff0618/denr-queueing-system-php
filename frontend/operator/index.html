@@ -173,13 +173,13 @@
             </div>
             <div class="queue-actions">
                 <div class="buttonGrp">
-                    <button onclick="flashSelected()">Flash</button>
-                    <button onclick="skip('pending')">Skip</button>
+                    <button id="flashBtn" onclick="flashSelected()">Flash</button>
+                    <button id="skipBtn" onclick="skip('pending')">Skip</button>
                 </div>
-                <button onclick="updateCurrent('forwarded')">Forward to Division</button>
+                <button id="forwardBtn" onclick="updateCurrent('forwarded')">Forward to Division</button>
                 <div class="buttonGrp">
-                    <button onclick="updateCurrent('completed')">Complete</button>
-                    <button onclick="updateCurrent('cancelled')">Cancel</button>
+                    <button id="completeBtn" onclick="updateCurrent('completed')">Complete</button>
+                    <button id="cancelBtn" onclick="updateCurrent('cancelled')">Cancel</button>
                 </div>
             </div>
         </div>
