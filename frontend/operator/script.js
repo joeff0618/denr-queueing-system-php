@@ -113,8 +113,6 @@ function add() {
 
 /* OPEN EDIT */
 async function openSelectedEdit() {
-    if (!selectedEntryId) return;
-
     try {
         const response = await fetch(`${API_BASE}/today`);
         const queue = await response.json();
@@ -312,6 +310,7 @@ function togglePanelButtons(status = null) {
 
     switch (normalizedStatus) {
         case "processing":
+            setPanelButtonState("flashBtn", false);
             enableButton("skipBtn");
             enableButton("forwardBtn");
             enableButton("completeBtn");
@@ -327,9 +326,15 @@ function togglePanelButtons(status = null) {
             break;
 
         case "forwarded":
+            setPanelButtonState("flashBtn", false);
             enableButton("flashBtn");
             enableButton("completeBtn");
             enableButton("cancelBtn");
+            break;
+    
+        case "completed":
+        case "cancelled":
+            setPanelButtonState("flashBtn", false);
             break;
     }
 }
@@ -617,13 +622,14 @@ function filterTable(){
 function applyQueueFilters() {
     const search = document.getElementById("searchInput").value.toLowerCase();
     const div = document.getElementById("divisionFilter").value.toLowerCase();
+    const hideCompleted = document.getElementById("hideCompleted").checked;
 
     filteredQueueData = allQueueData.filter(item => {
         const text = `${item.id} ${item.queue_no} ${item.client_name} ${item.purpose} ${item.division} ${item.status}`.toLowerCase();
         const matchSearch = !search || text.includes(search);
         const matchDiv = !div || item.division.toLowerCase() === div;
-
-        return matchSearch && matchDiv;
+        const filterCompleted = !hideCompleted || item.status.toLowerCase() !== "completed";        
+        return matchSearch && matchDiv && filterCompleted;
     });
 
     sortFilteredQueue();
@@ -680,6 +686,10 @@ function sortFilteredQueue() {
         if (valA > valB) return operatorSortDirection === "asc" ? 1 : -1;
         return compareQueueOrder(a, b);
     });
+}
+
+function hideCompletedToggle() {
+    applyQueueFilters();
 }
 
 function compareQueueOrder(a, b) {
@@ -950,6 +960,7 @@ function clearSelection(){
     document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
     const flashBtn = document.getElementById("flashBtn");
     if (flashBtn) flashBtn.textContent = "Flash Next";
+    setPanelButtonState("flashBtn", true);
 }
 
 async function handleFlashAction() {
@@ -968,7 +979,7 @@ async function callNext() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            alert(errorData.detail || "No pending items in the queue.");
+            alert("No PENDING entries in the queue to flash.");
             return;
         }
 
@@ -979,24 +990,11 @@ async function callNext() {
 }
 
 async function flashSelected() {
-    if (!document.getElementById("flashBtn")?.disabled) {
-        if (!selectedEntryId) {
-            alert("Please select a queue item from the table first.");
-            return;
-        }
-    } else {
-        return;
-    }
     try {
         const todayRes = await fetch(`${API_BASE}/today`);
         const queue = await todayRes.json();
         const item = queue.find(q => q.id === selectedEntryId);
         if(!item) return;
-
-        if (item.status.toLowerCase() !== "pending") {
-            alert("Status must be PENDING to change to PROCESSING");
-            return;
-        }
 
         await fetch(`${API_BASE}/status/${item.id}`, {
             method: "PUT",
@@ -1090,10 +1088,6 @@ toggleBtn.addEventListener("click", () => {
 });
 
 async function skip(status) {
-    if (!selectedEntryId) {
-        alert("Please select a queue item from the table first.");
-        return;
-    }
     try {
         const todayRes = await fetch(`${API_BASE}/today`);
         const queue = await todayRes.json();
@@ -1101,11 +1095,6 @@ async function skip(status) {
 
         if (!item) {
             alert("Selected queue item not found.");
-            return;
-        }
-
-        if (item.status.toLowerCase() !== "processing") {
-            alert("Status must be PROCESSING to change to PENDING");
             return;
         }
 
@@ -1129,10 +1118,6 @@ async function skip(status) {
 }
 
 async function updateCurrent(status) {
-    if (!selectedEntryId) {
-        alert("Please select a queue item from the table first.");
-        return;
-    }
     try {
         const todayRes = await fetch(`${API_BASE}/today`);
         const queue = await todayRes.json();
@@ -1145,18 +1130,6 @@ async function updateCurrent(status) {
 
         const itemStatus = item.status.toLowerCase();
         const targetStatus = status.toLowerCase();
-
-        if (targetStatus === "forwarded") {
-            if (itemStatus !== "processing" && itemStatus !== "pending") {
-                alert("Status must be PROCESSING or PENDING to change to FORWARDED");
-                return;
-            }
-        } else if (targetStatus === "completed") {
-            if (itemStatus !== "processing" && itemStatus !== "pending" && itemStatus !== "forwarded") {
-                alert("Status must be PROCESSING, PENDING, or FORWARDED to change to COMPLETED");
-                return;
-            }
-        }
 
         const response = await fetch(`${API_BASE}/status/${item.id}`, {
             method: "PUT",

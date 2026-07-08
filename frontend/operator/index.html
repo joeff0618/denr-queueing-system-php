@@ -133,8 +133,12 @@
                 <option value="admin">Admin</option>
                 <option value="pmd">PMD</option>
                 <option value="rscig">RSCIG</option>
-
             </select>
+
+            <label class="completed-toggle">
+                <input type="checkbox" id="hideCompleted" onchange="hideCompletedToggle()" checked>
+                <span>Hide Completed</span>
+            </label>
 
             <button class="download-btn" id="download CsvBtn" onclick="openDownloadModal()" data-allowed-div="sadmin">
                 <img src="../assets/svg/download-svgrepo-com.svg" alt="" aria-hidden="true" class="download-icon">

@@ -392,6 +392,7 @@ h1 {
 
 .search-field input,
 .controls select,
+.completed-toggle,
 input,
 textarea,
 select {
@@ -406,6 +407,32 @@ select {
 .search-field input {
     width: 100%;
     padding: 9px 12px 9px 38px;
+}
+
+.completed-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 8px 12px;
+    color: #344054;
+    cursor: pointer;
+    font-weight: 700;
+    user-select: none;
+    white-space: nowrap;
+    margin-bottom: 0;
+}
+
+.completed-toggle:hover {
+    border-color: #94a3b8;
+}
+
+.completed-toggle input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--primary);
+    cursor: pointer;
 }
 
 .controls select {
