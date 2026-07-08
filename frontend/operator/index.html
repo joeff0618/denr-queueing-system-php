@@ -6,6 +6,7 @@
 <title>DENR Queueing System - Operator Display</title>
 
 <link rel="stylesheet" href="../operator/style.css">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="../operator/script.js" defer>
 </script>
 <link rel="icon" href="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" type="image/x-icon">
@@ -173,7 +174,7 @@
             </div>
             <div class="queue-actions">
                 <div class="buttonGrp">
-                    <button id="flashBtn" onclick="flashSelected()">Flash</button>
+                    <button id="flashBtn" onclick="handleFlashAction()">Flash Next</button>
                     <button id="skipBtn" onclick="skip('pending')">Skip</button>
                 </div>
                 <button id="forwardBtn" onclick="updateCurrent('forwarded')">Forward to Division</button>
@@ -673,6 +674,19 @@
             <button class="delete-btn" style="background: var(--danger); color: white;" onclick="deleteSelectedUser()">Delete</button>
             <button class="cancel-btn" onclick="closeModal('userDeleteModal')">Cancel</button>
         </div>
+    </div>
+</div>
+
+<!-- CUSTOM MODAL DIALOG -->
+<div id="customModal" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-icon-container" id="modalIconContainer">
+            <i class="ph ph-check-circle" id="modalIcon"></i>
+        </div>
+        <h3 id="modalTitle">Success</h3>
+        <div id="modalQueueNoContainer" class="modal-queue-box" style="display: none;"></div>
+        <p id="modalMessage">Your ticket has been generated.</p>
+        <button type="button" class="modal-close-btn" id="modalCloseBtn">OK</button>
     </div>
 </div>
 

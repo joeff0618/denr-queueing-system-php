@@ -178,7 +178,7 @@ document.getElementById("entryForm")
             const cardsData = await cardsRes.json();
 
             if (cardsData.available_cards.length === 0) {
-                alert( "No cards available! All 30 cards are currently in use." );
+                showCustomKioskModal("No Cards Available", "All 30 physical cards are currently in use.", false);
                 return;
             }
 
@@ -191,12 +191,17 @@ document.getElementById("entryForm")
 
             if (!response.ok) {
                 const errorData = await response.json();
-                alert("Error: " + errorData.detail);
+                showCustomKioskModal("Submission Error", errorData.detail || "Unable to queue this ticket.", false);
                 return;
             }
 
             const newItem = await response.json();
-            alert( `Card #${newItem.queue_no} assigned to ${newItem.client_name}` );
+            showCustomKioskModal(
+                "Ticket Created!",
+                `Name: ${newItem.client_name}\n\nPlease hand physical card #${newItem.queue_no} to the client.`,
+                true,
+                newItem.queue_no
+            );
         }
 
     /* ================= EDIT ================= */
@@ -219,8 +224,44 @@ document.getElementById("entryForm")
         clearSelection();
     } catch (error) {
         console.error(error);
-        alert("Failed to connect to the server.");
+        showCustomKioskModal("Connection Error", "Failed to connect to the server.", false);
     }
+});
+
+// Custom Creation Modal logic for Operator
+function showCustomKioskModal(title, message, isSuccess = true, queueNo = null) {
+    const modal = document.getElementById("customModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalMessage = document.getElementById("modalMessage");
+    const iconContainer = document.getElementById("modalIconContainer");
+    const icon = document.getElementById("modalIcon");
+    const queueNoContainer = document.getElementById("modalQueueNoContainer");
+
+    modalTitle.textContent = title;
+    modalMessage.textContent = message;
+
+    if (queueNoContainer) {
+        if (queueNo !== null) {
+            queueNoContainer.textContent = queueNo;
+            queueNoContainer.style.display = "inline-flex";
+        } else {
+            queueNoContainer.style.display = "none";
+        }
+    }
+
+    if (isSuccess) {
+        iconContainer.className = "modal-icon-container success";
+        icon.className = "ph ph-check-circle";
+    } else {
+        iconContainer.className = "modal-icon-container error";
+        icon.className = "ph ph-warning-circle";
+    }
+
+    modal.style.display = "flex";
+}
+
+document.getElementById("modalCloseBtn").addEventListener("click", () => {
+    closeModal("customModal");
 });
 
 /* PRIORITY */
@@ -897,6 +938,8 @@ function selectRow(id, rowElement){
     document.getElementById("editSelectedBtn").classList.add("show");
     document.getElementById("deleteSelectedBtn").classList.add("show");
     syncPanelButtonsForSelection();
+    const flashBtn = document.getElementById("flashBtn");
+    if (flashBtn) flashBtn.textContent = "Flash";
 }
 
 function clearSelection(){
@@ -905,6 +948,34 @@ function clearSelection(){
     document.getElementById("editSelectedBtn").classList.remove("show");
     document.getElementById("deleteSelectedBtn").classList.remove("show");
     document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+    const flashBtn = document.getElementById("flashBtn");
+    if (flashBtn) flashBtn.textContent = "Flash Next";
+}
+
+async function handleFlashAction() {
+    if (selectedEntryId) {
+        await flashSelected();
+    } else {
+        await callNext();
+    }
+}
+
+async function callNext() {
+    try {
+        const response = await fetch(`${API_BASE}/call-next`, {
+            method: "PUT"
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(errorData.detail || "No pending items in the queue.");
+            return;
+        }
+
+        await loadQueue();
+    } catch (error) {
+        console.error("Error calling next queue:", error);
+    }
 }
 
 async function flashSelected() {
@@ -1082,7 +1153,7 @@ async function updateCurrent(status) {
             }
         } else if (targetStatus === "completed") {
             if (itemStatus !== "processing" && itemStatus !== "pending" && itemStatus !== "forwarded") {
-                alert("Status must be PROCESSING or PENDING or FORWARDED to change to COMPLETED");
+                alert("Status must be PROCESSING, PENDING, or FORWARDED to change to COMPLETED");
                 return;
             }
         }
