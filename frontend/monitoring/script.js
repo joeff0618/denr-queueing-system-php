@@ -39,7 +39,7 @@ function updateDivisionBadge() {
 
 (async function() {                                                                                                           
             try {                                                                                                                     
-                const response = await fetch("/api/auth/profile");                                                                    
+                const response = await fetch("../api/auth/profile");                                                                    
                 if (!response.ok) {                                                                                                   
                     // If unauthorized (e.g. 401), redirect back to login                                                             
                     window.location.replace("../login/auth.html");                                                                      
