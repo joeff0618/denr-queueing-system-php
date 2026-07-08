@@ -1127,3 +1127,138 @@ tr.priority-row td:first-child {
         grid-template-columns: 1fr;
     }
 }
+
+/* FORWARDED ANNOUNCEMENT MODAL SPECIFICS */
+.forwarded-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000 !important;
+    padding: 16px;
+    animation: modalFadeIn 0.25s ease forwards;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.forwarded-announcement-content {
+    background: #ffffff !important;
+    width: min(100%, 520px) !important; /* Enlarge width from 420px to 520px */
+    padding: 44px 36px !important; /* Increase padding for a spacious feel */
+    border-radius: 1.5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 20px !important; /* Slightly more gap */
+    border: none !important; /* Remove flashy green border */
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18) !important; /* Simpler clean shadow */
+    animation: modalContentScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* Simpler zoom animation */
+}
+
+@keyframes modalContentScale {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.forwarded-announcement-content .modal-icon-container {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.forwarded-announcement-content .modal-icon-container.success {
+    background: #f0fdf4 !important; /* Client-style light green background */
+}
+
+.forwarded-announcement-content .modal-icon-container.success i {
+    color: #15803d !important;
+    font-size: 3.2rem !important;
+}
+
+.forwarded-announcement-content h3 {
+    font-size: 2rem; /* Enlarge font size slightly */
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.announcement-division-badge {
+    background: #f0fdf4 !important;
+    color: #166534 !important;
+    border: 1px solid #bbf7d0 !important;
+    padding: 6px 14px !important;
+    border-radius: 9999px !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-top: -8px !important;
+}
+
+.forwarded-announcement-content .modal-queue-box {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 280px !important; /* Enlarge box from 220px to 280px */
+    height: 140px !important; /* Enlarge height from 120px to 140px */
+    background-color: #15803d !important;
+    color: #ffffff !important;
+    font-size: 5.5rem !important; /* Enlarge font size from 4.6rem to 5.5rem */
+    font-weight: 800;
+    border-radius: 24px !important;
+    margin: 12px auto !important;
+    box-shadow: 0 6px 20px rgba(21, 128, 61, 0.25) !important;
+    letter-spacing: -0.02em !important;
+}
+
+.forwarded-announcement-content .modal-message-title {
+    font-size: 0.95rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.1rem;
+    margin: 8px 0 0;
+}
+
+.forwarded-announcement-content .modal-message-desc {
+    font-size: 1.5rem; /* Enlarge purpose text slightly */
+    font-weight: 750;
+    color: #1e293b;
+    line-height: 1.4;
+    margin: 0 0 16px;
+}
+
+.forwarded-announcement-content .modal-close-btn {
+    width: 100% !important;
+    padding: 15px !important;
+    background: #15803d !important; /* Simple client-style green */
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease !important;
+    margin-top: 12px !important;
+}
+
+.forwarded-announcement-content .modal-close-btn:hover {
+    background: #166534 !important;
+}
+
+.forwarded-announcement-content .modal-close-btn:active {
+    transform: scale(0.98);
+}

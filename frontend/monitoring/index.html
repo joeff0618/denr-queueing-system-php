@@ -7,6 +7,7 @@
 <meta name="description" content="DENR Queueing System monitoring dashboard for queue oversight.">
 
 <link rel="stylesheet" href="../monitoring/style.css">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="../monitoring/script.js" defer></script>
 <link rel="icon" href="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" type="image/x-icon">
 </head>
@@ -292,5 +293,21 @@
         </div>
     </div>
 </div>
+
+<!-- FORWARDED ANNOUNCEMENT MODAL -->
+<div id="forwardedAnnouncementModal" class="modal forwarded-modal-overlay">
+    <div class="modal-content forwarded-announcement-content">
+        <div class="modal-icon-container success">
+            <i class="ph ph-bell-ringing"></i>
+        </div>
+        <h3>Ticket Forwarded</h3>
+        <span class="announcement-division-badge" id="announcementDivision">General</span>
+        <div class="modal-queue-box" id="announcementQno">000</div>
+        <p class="modal-message-title">Purpose of Visit</p>
+        <p class="modal-message-desc" id="announcementPurpose">Purpose details go here</p>
+        <button type="button" class="modal-close-btn" onclick="closeModal('forwardedAnnouncementModal')">Dismiss</button>
+    </div>
+</div>
+
 </body>
 </html>

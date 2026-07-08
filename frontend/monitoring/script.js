@@ -128,14 +128,48 @@ function updateMonitoringDashboard() {
     );
 
     if (knownForwardedIds !== null) {
-        let hasNew = false;
+        let newItem = null;
         items.forEach(item => {
             if (!knownForwardedIds.has(item.id)) {
-                hasNew = true;
+                newItem = item;
             }
         });
-        if (hasNew) {
+        if (newItem) {
             playChime();
+            
+            const modal = document.getElementById("forwardedAnnouncementModal");
+            const qnoEl = document.getElementById("announcementQno");
+            const purposeEl = document.getElementById("announcementPurpose");
+            const divisionEl = document.getElementById("announcementDivision");
+            
+            const divisionName = newItem.division ? newItem.division.toUpperCase() : "GENERAL";
+            
+            if (modal && qnoEl && purposeEl) {
+                qnoEl.textContent = newItem.queue_no;
+                purposeEl.textContent = newItem.purpose;
+                if (divisionEl) {
+                    divisionEl.textContent = divisionName;
+                }
+                modal.style.display = "flex";
+            }
+            
+            // Format division pronunciation for acronyms/codes
+            let spokenDivision = divisionName;
+            if (['SMD', 'R-SMD', 'SR-SMD', 'LPDD', 'PMD', 'RSCIG'].includes(divisionName)) {
+                spokenDivision = divisionName.replace('-', ' ').split('').join(' ');
+            } else if (divisionName === 'A0504') {
+                spokenDivision = 'A 0 5 0 4';
+            }
+            
+            const speechText = `Number ${newItem.queue_no} is forwarded to ${spokenDivision}, please attend to the client immediately. Purpose: ${newItem.purpose}.`;
+            const utterance = new SpeechSynthesisUtterance(speechText);
+            utterance.rate = 0.9;
+            
+            // Play TTS after the chime has completed (approx 1.5 seconds)
+            setTimeout(() => {
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            }, 1500);
         }
     }
     knownForwardedIds = new Set(items.map(item => item.id));
@@ -854,6 +888,9 @@ async function updateCurrent(newStatus) {
 // Close modals
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = "none";
+    if (modalId === 'forwardedAnnouncementModal') {
+        window.speechSynthesis.cancel();
+    }
 }
 
 /* ================= AUTO HTTP REFRESH ================= */
