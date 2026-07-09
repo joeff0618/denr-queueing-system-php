@@ -14,10 +14,8 @@
 
 <body>
     <div class="content">
-
 <!-- ===================== QUEUE PAGE ===================== -->
         <div id="queuePage" class="page active">
-
             <div class="page-header">
                 <div class="brand-block">
                     <img src="../assets/img/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png" alt="DENR logo">
@@ -78,9 +76,8 @@
                 </div>
             </div>
 
-<!-- FILTERS -->
+            <!-- FILTERS -->
             <div class="controls">
-
                 <div class="search-field">
                     <span aria-hidden="true"></span>
                     <input type="text"
@@ -88,14 +85,12 @@
                         placeholder="Search name, purpose, queue no."
                         onkeyup="applyFilters()">
                 </div>
-
                 <div class="filter-group">
                     <select id="priorityFilter" onchange="applyFilters()" aria-label="Priority filter">
                         <option value="">All Priority</option>
                         <option value="true">Priority</option>
                         <option value="false">Non-Priority</option>
                     </select>
-
                     <select id="statusFilter" onchange="applyFilters()" aria-label="Status filter">
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
@@ -105,16 +100,14 @@
                         <option value="deferred">Deferred</option>
                     </select>
                 </div>
-
                 <label class="today-toggle">
                     <input type="checkbox" id="todayOnly" onchange="onTodayToggle()" checked>
                     <span>Today Only</span>
                 </label>
             </div>
 
-<!-- TABLE AND PANEL -->
+    <!-- TABLE AND PANEL -->
     <div class="queue-layout">
-
         <!-- TABLE -->
         <div class="table-shell">
             <table>
@@ -147,11 +140,9 @@
                         </th>
                     </tr>
                 </thead>
-
                 <tbody id="queueBody"></tbody>
             </table>
         </div>
-
         <!-- RIGHT PANEL -->
         <div class="queue-panel">
             <div class="number-display" id="numberDisplay">
@@ -159,31 +150,31 @@
                     <!-- Dynamically append buttons -->
                 </div>
             </div>
-
-            <button class="panel-btn" id="completeBtn" onclick="updateCurrent('completed')">
-                Complete
-            </button>
-            <button class="panel-btn" id="returnBtn" onclick="updateCurrent('pending')">
-                Return
-            </button>
+            <button class="panel-btn" id="completeBtn" onclick="updateCurrent('completed')" disabled>Complete</button>
+            <button class="panel-btn" id="returnBtn" onclick="updateCurrent('pending')" disabled>Return</button>
         </div>
     </div>
 
-<!-- PAGINATION -->
+            <!-- PAGINATION -->
             <div class="pagination" id="pagination">
-                <button id="prevPageBtn" onclick="changePage(-1)">‹ Prev</button>
-                <span id="pageInfo">Page 1 of 1</span>
-                <button id="nextPageBtn" onclick="changePage(1)">Next ›</button>
-                <select id="rowsPerPage" onchange="changeRowsPerPage()">
-                    <option value="6" selected>6 rows</option>
-                    <option value="15">15 rows</option>
-                    <option value="25">25 rows</option>
-                    <option value="50">50 rows</option>
-                    <option value="100">100 rows</option>
-                </select>
-                <span class="total-count" id="totalCount">0 items</span>
+                <div class="entry-action-buttons" style="display: flex; gap: 8px;">
+                    <button id="editEntryBtn" onclick="openEditEntryModal()" disabled>Edit</button>
+                    <button id="transferEntryBtn" onclick="openTransferEntryModal()" disabled>Transfer</button>
+                </div>
+                <div class="pagination-right">
+                    <button id="prevPageBtn" onclick="changePage(-1)">‹ Prev</button>
+                    <span id="pageInfo">Page 1 of 1</span>
+                    <button id="nextPageBtn" onclick="changePage(1)">Next ›</button>
+                    <select id="rowsPerPage" onchange="changeRowsPerPage()">
+                        <option value="6" selected>6 rows</option>
+                        <option value="15">15 rows</option>
+                        <option value="25">25 rows</option>
+                        <option value="50">50 rows</option>
+                        <option value="100">100 rows</option>
+                    </select>
+                    <span class="total-count" id="totalCount">0 items</span>
+                </div>
             </div>
-
         </div>
     </div>
 
@@ -291,6 +282,88 @@
             <button class="save-btn" onclick="logout()">Logout</button>
             <button class="cancel-btn" onclick="closeModal('logoutModal')">Cancel</button>
         </div>
+    </div>
+</div>
+
+<!-- EDIT ENTRY MODAL -->
+<div id="editEntryModal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle">Edit Entry</h2>
+
+        <form id="entryForm">
+            <input type="hidden" id="entryId">
+
+            <div class="form-group">
+                <label>Client Name<span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="clientName" required maxlength="40" oninput="toggleClearButton(this)">
+                    <button type="button" class="clear-btn" onclick="clearField('clientName')">
+                        ✕
+                    </button>
+                </div>
+                <span class="error-message" id="clientError"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Purpose<span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <textarea id="purpose" required maxlength="100" 
+                        oninput="toggleClearButton(this)"></textarea>
+
+                    <button type="button" class="clear-btn textarea-clear"
+                            onclick="clearField('purpose')">
+                        ✕
+                    </button>
+                </div>
+                <span class="error-message" id="purposeError"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <div class="status-buttons">
+                    <button type="button" class="status-btn active" data-status="pending">Pending</button>
+                    <button type="button" class="status-btn" data-status="processing">Processing</button>
+                    <button type="button" class="status-btn" data-status="forwarded">Forwarded</button>
+                    <button type="button" class="status-btn" data-status="completed">Completed</button>
+                    <button type="button" class="status-btn bottom-btn" data-status="cancelled">Cancelled</button>
+                </div>
+                <input type="hidden" id="updateStatus" value="pending">
+            </div>
+
+            <div class="modal-actions">
+                <button class="save-btn" type="submit" id="submitBtn">Save Changes</button>
+                <button type="button" class="cancel-btn"onclick="closeModal('editEntryModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TRANSFER CLIENT MODAL -->
+ <div id="transferEntryModal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle">Transfer Client to Division</h2>
+
+        <form id="entryForm">
+            <input type="hidden" id="entryId">
+
+            <div class="form-group">
+                <label>Choose a Division</label>
+                <select id="division" required>
+                    <option value="">Select</option>
+                    <option value="smd">SMD</option>
+                    <option value="lpdd">LPDD</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="legal">Legal</option>
+                    <option value="admin">Admin</option>
+                    <option value="pmd">PMD</option>
+                    <option value="rscig">RSCIG</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="save-btn" type="submit" id="submitBtn">Save</button>
+                <button type="button" class="cancel-btn"onclick="closeModal('transferEntryModal')">Cancel</button>
+            </div>
+        </form>
     </div>
 </div>
 

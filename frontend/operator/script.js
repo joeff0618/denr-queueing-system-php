@@ -361,15 +361,12 @@ function closeModal(modalId) {
 
 function toggleClearButton(input) {
     const clearBtn = input.parentElement.querySelector(".clear-btn");
-
-    if (clearBtn) {
-        clearBtn.classList.toggle("visible", input.value.trim() !== "");
-    }
+    if (!clearBtn) return;
+    clearBtn.classList.toggle("visible", input.value.trim());
 }
 
 function clearField(fieldId) {
     const field = document.getElementById(fieldId);
-
     if (field.tagName === "SELECT") {
         field.selectedIndex = 0;
     } else {

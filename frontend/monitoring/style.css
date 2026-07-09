@@ -14,6 +14,8 @@
     --line-soft: #e7edf3;
     --primary: #0f766e;
     --primary-dark: #115e59;
+    --danger: #dc2626;
+    --warning: #b45309;
     --focus: #2563eb;
     --shadow: 0 14px 38px rgba(15, 23, 42, 0.09);
     --radius: 8px;
@@ -29,9 +31,25 @@ body {
     font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
 
-button,
-input,
-select {
+label {
+    display: block;
+    margin-bottom: 7px;
+    color: #344054;
+    font-size: 0.88rem;
+    font-weight: 750;
+}
+
+textarea {
+    min-height: 96px !important;
+    resize: vertical;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+}
+
+button, input,textarea, select {
     font: inherit;
 }
 
@@ -307,6 +325,7 @@ select:focus-visible {
     transform: rotate(45deg);
 }
 
+input, textarea, select,
 .search-field input,
 .controls select,
 #rowsPerPage,
@@ -399,6 +418,13 @@ tr {
     display: table;
     width: 100%;
     table-layout: fixed;
+}
+
+tr.selected {
+    outline: 2px solid #2563eb;
+    outline-offset: -2px;
+    background-color: #e0f2fe !important;
+    cursor: pointer;
 }
 
 thead {
@@ -670,6 +696,12 @@ tr.priority-row td:first-child {
     opacity: 0.45;
 }
 
+.pagination-right {
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+}
+
 #pageInfo,
 .total-count {
     color: var(--muted);
@@ -749,6 +781,38 @@ tr.priority-row td:first-child {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 18px;
+}
+
+.status-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    max-width: 500px;
+}
+
+.bottom-btn {
+    grid-column: 1 / span 2;
+    justify-self: center;
+    width: 70%;
+}
+
+.status-btn {
+    padding: 4px 8px;
+    border: 2px solid #ccc;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.status-btn:hover {
+    border-color: #007bff;
+}
+
+.status-btn.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
 }
 
 .save-btn,
@@ -1049,6 +1113,72 @@ tr.priority-row td:first-child {
 .primary-warning {
     color: var(--text);
     font-size: 1rem;
+}
+
+.secondary-warning {
+    color: var(--danger); 
+    font-size: 0.85rem; 
+    font-weight: 800;
+    margin-top: 8px; 
+}
+
+.required {
+    color: var(--danger);
+    font-weight: 800;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper input,
+.input-wrapper textarea,
+.input-wrapper select {
+    width: 100%;
+    padding-right: 40px;
+}
+
+.clear-btn {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    color: #667085;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.clear-btn.visible {
+    display: inline-flex;
+}
+
+.clear-btn:hover {
+    color: var(--danger);
+}
+
+.textarea-clear {
+    top: 16px;
+    transform: none;
+}
+
+.error-message {
+    display: block;
+    min-height: 18px;
+    margin-top: 4px;
+    color: var(--danger);
+    font-size: 0.85rem;
+}
+
+.input-error {
+    border-color: var(--danger) !important;
+}
+
+.empty-state {
+    padding: 38px 20px;
+    color: var(--muted);
+    text-align: center;
 }
 
 @media (max-width: 1050px) {

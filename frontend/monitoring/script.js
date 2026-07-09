@@ -82,6 +82,18 @@ function updateDivisionBadge() {
 document.addEventListener("DOMContentLoaded", () => {
     updateDivisionBadge();
     loadAllData();
+    // Deselect when clicking outside of rows or controls
+    document.addEventListener('click', (e) => {
+        // If click is inside a table row, a queue number button, or any form/control element, keep selection
+        if (e.target.closest('tr[data-entry-id]') || e.target.closest('.queue-number') || e.target.closest('button') 
+            || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select') 
+            || e.target.closest('label')) {
+            return;
+        }
+
+        // Otherwise clear selection
+        selectRow(null, null);
+    });
 });
 
 /* ================= DATA FETCHING ================= */
@@ -185,7 +197,6 @@ function updateMonitoringDashboard() {
 
     if (items.length === 0) {
         selectedEntryId = null;
-        currentEntryId = null;
         currentQueueNumber = null;
 
         grid.innerHTML = `
@@ -196,7 +207,7 @@ function updateMonitoringDashboard() {
                 font-weight: 700;
                 padding: 20px;
             ">
-                No Queue
+                None Forwarded
             </div>
         `;
 
@@ -210,22 +221,22 @@ function updateMonitoringDashboard() {
 
         btn.className = "queue-number";
         btn.textContent = String(item.queue_no);
+        btn.dataset.entryId = item.id;
 
         if (item.id === selectedEntryId) {
             btn.classList.add("active");
         }
 
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
             // Clicking the selected button deselects it
             if (selectedEntryId === item.id) {
                 selectedEntryId = null;
-                currentEntryId = null;
                 currentQueueNumber = null;
 
                 btn.classList.remove("active");
             } else {
                 selectedEntryId = item.id;
-                currentEntryId = item.id;
                 currentQueueNumber = item.queue_no;
 
                 document
@@ -235,17 +246,19 @@ function updateMonitoringDashboard() {
                 btn.classList.add("active");
             }
 
-                completeBtn.disabled = selectedEntryId === null;
-            returnBtn.disabled = selectedEntryId === null;
+            if (item && item.status.toLowerCase() === "forwarded") {
+                document.getElementById("completeBtn").disabled = false;
+                document.getElementById("returnBtn").disabled = false;
+            } else {
+                document.getElementById("completeBtn").disabled = true;
+                document.getElementById("returnBtn").disabled = true;
+            }
             // Keep the table selection in sync with the number-grid selection
             renderTable();
         });
 
         grid.appendChild(btn);
     });
-
-    completeBtn.disabled = selectedEntryId === null;
-    returnBtn.disabled = selectedEntryId === null;
 }
 
 /* ================= TODAY TOGGLE ================= */
@@ -452,7 +465,7 @@ function escapeHtml(value) {
 
 function renderTable() {
     const body = document.getElementById("queueBody");
-    body.innerHTML = "";
+    // We'll update rows incrementally to avoid replacing the DOM node of the selected row (prevents blinking)
 
     const totalItems = filteredData.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
@@ -464,6 +477,7 @@ function renderTable() {
     const endIdx = Math.min(startIdx + rowsPerPage, totalItems);
     const pageData = filteredData.slice(startIdx, endIdx);
 
+    body.querySelector(".empty-state")?.closest("tr")?.remove();
     if (pageData.length === 0) {
         body.innerHTML = `
             <tr>
@@ -471,34 +485,57 @@ function renderTable() {
             </tr>
         `;
     } else {
-        pageData.forEach(item => {
+        // Map existing rows by id
+        const existing = new Map();
+        body.querySelectorAll('tr[data-entry-id]').forEach(r => existing.set(Number(r.dataset.entryId), r));
+
+        const seen = new Set();
+
+        pageData.forEach((item, idx) => {
+            seen.add(item.id);
             const statusClass = `status-${item.status.toLowerCase()}`;
             const isPriority = item.priority !== "regular";
             const priorityClass = isPriority ? "priority-badge is-priority" : "priority-badge";
 
-            const rowClasses = [];
-            if (isPriority) rowClasses.push('priority-row');
-            if (item.id === selectedEntryId) rowClasses.push('selected-row');
+            let row = existing.get(item.id);
+            if (!row) {
+                row = document.createElement('tr');
+                row.dataset.entryId = item.id;
+                row.innerHTML = `
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                `;
+                row.addEventListener('click', (e) => { e.stopPropagation(); selectRow(item.id, row); });
+                body.appendChild(row);
+            }
 
-            const inlineStyle = item.id === selectedEntryId ? 'style="background:#FFF8C6;"' : '';
+            // Update cell contents
+            row.cells[1].textContent = item.queue_no;
+            row.cells[2].textContent = item.client_name || "";
+            row.cells[3].textContent = item.purpose || "";
+            row.cells[4].innerHTML = `<span class="status-badge ${statusClass}">${escapeHtml((item.status || "").toUpperCase())}</span>`;
+            row.cells[5].innerHTML = `<span class="${priorityClass}">${isPriority ? "Priority" : "Regular"}</span>`;
+            row.cells[6].textContent = formatServiceTime(item);
+            row.cells[7].textContent = formatDatetime(item.created_at);
+            row.cells[8].textContent = formatDatetime(item.completed_at);
 
-            body.innerHTML += `
-            <tr data-entry-id="${item.id}" class="${rowClasses.join(' ')}" ${inlineStyle}>
-                <td></td>
-                <td>${item.queue_no}</td>
-                <td>${escapeHtml(item.client_name)}</td>
-                <td>${escapeHtml(item.purpose)}</td>
-                <td><span class="status-badge ${statusClass}">${escapeHtml(item.status.toUpperCase())}</span></td>
-                <td><span class="${priorityClass}">${isPriority ? "Priority" : "Regular"}</span></td>
-                <td>${formatServiceTime(item)}</td>
-                <td>${formatDatetime(item.created_at)}</td>
-                <td>${formatDatetime(item.completed_at)}</td>
-            </tr>
-            `;
+            row.classList.toggle('priority-row', isPriority);
+            if (selectedEntryId === item.id) row.classList.add('selected-row'); else row.classList.remove('selected-row');
         });
 
-        document.querySelectorAll(".table-shell tbody tr").forEach((row, index) => {
-            row.cells[0].textContent = index + 1;
+        // Remove rows not on current page
+        existing.forEach((r, id) => { if (!seen.has(id)) r.remove(); });
+
+        // Update numbering
+        body.querySelectorAll(".table-shell tbody tr").forEach((row, index) => {
+            if (row.cells && row.cells[0]) row.cells[0].textContent = index + 1;
         });
     }
 
@@ -873,7 +910,6 @@ async function updateCurrent(newStatus) {
         // Clear selection if selected item no longer exists
         if (selectedEntryId !== null ) {
             selectedEntryId = null;
-            currentEntryId = null;
             currentQueueNumber = null;
         }
 
@@ -885,13 +921,229 @@ async function updateCurrent(newStatus) {
 }
 
 /* ================= UTILITIES ================= */
-// Close modals
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = "none";
     if (modalId === 'forwardedAnnouncementModal') {
         window.speechSynthesis.cancel();
     }
 }
+
+function toggleClearButton(input) {
+    const clearBtn = input.parentElement.querySelector(".clear-btn");
+    if (!clearBtn) return;
+    clearBtn.classList.toggle("visible", input.value.trim());
+}
+
+function clearField(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field.tagName === "SELECT") {
+        field.selectedIndex = 0;
+    } else {
+        field.value = "";
+    }
+
+    toggleClearButton(field);
+}
+
+/* Entry Validation */
+function validateForm(clientFieldId, purposeFieldId) {
+    const clientField = document.getElementById(clientFieldId);
+    const purposeField = document.getElementById(purposeFieldId);
+
+    const isEditForm = clientFieldId.startsWith("fullEdit");
+    const clientError = document.getElementById(isEditForm ? "editClientError" : "clientError");
+    const purposeError = document.getElementById(isEditForm ? "editPurposeError" : "purposeError");
+
+    let isValid = true;
+
+    if (clientError) clientError.textContent = "";
+    if (purposeError) purposeError.textContent = "";
+
+    clientField.classList.remove("input-error");
+    purposeField.classList.remove("input-error");
+
+    if (!clientField.value.trim()) {
+        if (clientError) clientError.textContent = "Please enter a client name.";
+        clientField.classList.add("input-error");
+        isValid = false;
+    }
+
+    if (!purposeField.value.trim()) {
+        if (purposeError) purposeError.textContent = "Please enter a purpose.";
+        purposeField.classList.add("input-error");
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+/* ================= ROW SELECTION ================= */
+
+function selectRow(id, rowElement){
+    // Clear previous selection visual
+    document.querySelectorAll(".table-shell tbody tr").forEach(r => r.classList.remove("selected"));
+    if (rowElement) rowElement.classList.add("selected");
+
+    // Store selection state
+    selectedEntryId = id;
+    currentEntryId = id;
+
+    // Try to find queue number for the selected id
+    const item = allData.find(it => it.id === id) || filteredData.find(it => it.id === id);
+    currentQueueNumber = item ? item.queue_no : null;
+
+    // Enable/disable action buttons
+    if (item && item.status.toLowerCase() === "forwarded") {
+        document.getElementById("completeBtn").disabled = false;
+        document.getElementById("returnBtn").disabled = false;
+    } else {
+        document.getElementById("completeBtn").disabled = true;
+        document.getElementById("returnBtn").disabled = true;
+    }
+
+    if (selectedEntryId) {
+        document.getElementById("editEntryBtn").disabled = false;
+        document.getElementById("transferEntryBtn").disabled = false;
+    } else {
+        document.getElementById("editEntryBtn").disabled = true;
+        document.getElementById("transferEntryBtn").disabled = true;
+    }
+    // Sync number-grid active state
+    document.querySelectorAll('.queue-number').forEach(b => {
+        if (b.dataset && b.dataset.entryId && Number(b.dataset.entryId) === id) b.classList.add('active');
+        else b.classList.remove('active');
+    });
+}
+
+/* ================= EDIT ENTRY ================= */
+let priorityType = null;
+
+async function openEditEntryModal() {
+    try {
+        const response = await fetch(`${API_BASE}/today`);
+        const queue = await response.json();
+        const item = queue.find(q => q.id === currentEntryId);
+        if (!item) return;
+
+        document.getElementById("entryId").value = item.id;
+        document.getElementById("clientName").value = item.client_name.trim();
+        document.getElementById("purpose").value = item.purpose.trim();
+        priorityType = item.priority;
+
+        toggleClearButton(document.getElementById("clientName"));
+        toggleClearButton(document.getElementById("purpose"));
+        document.getElementById("editEntryModal").style.display = "flex";
+
+    } catch (error) {
+        console.error("Error fetching item:", error);
+    }
+}
+
+document.getElementById("editEntryModal").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if (!validateForm("clientName", "purpose")) return;
+
+    const payload = {
+        client_name: document.getElementById("clientName").value.trim(),
+        purpose: document.getElementById("purpose").value.trim(),
+        division: userDivision,
+        priority: priorityType
+    };
+    const id = parseInt(document.getElementById("entryId").value);
+    const newStatus = document.getElementById("updateStatus").value;
+
+    try {
+        const responseEdit = await fetch(`${API_BASE}/edit/${currentEntryId}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        });
+
+        if (!responseEdit.ok) {
+            const errorData = await responseEdit.json();
+            alert("Error: " + errorData.detail);
+            return;
+        }
+        
+        const responseStatus = await fetch(`${API_BASE}/status/${currentEntryId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (!responseStatus.ok) {
+            const errorData = await responseStatus.json();
+            alert("Error: " + errorData.detail);
+            return;
+        }
+
+        closeModal('editEntryModal');
+        loadAllData();
+        currentEntryId = null;
+        priorityType = null;
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+document.querySelectorAll(".status-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("updateStatus").value = btn.dataset.status;
+    });
+});
+
+/* ================= TRANSFER ENTRY ================= */
+let clientName = null;
+let purpose = null;
+
+async function openTransferEntryModal() {
+    try {
+        const response = await fetch(`${API_BASE}/today`);
+        const queue = await response.json();
+        const item = queue.find(q => q.id === currentEntryId);
+        if (!item) return;
+
+        clientName = item.client_name;
+        purpose = item.purpose;
+        priorityType = item.priority;
+        document.getElementById("transferEntryModal").style.display = "flex";
+    } catch (error) {
+        console.error("Error fetching item:", error);
+    }
+}
+
+document.getElementById("transferEntryModal").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const payload = {
+        client_name: clientName,
+        purpose: purpose,
+        division: document.getElementById("division").value,
+        priority: priorityType
+    };
+
+    try {
+        const responseEdit = await fetch(`${API_BASE}/edit/${currentEntryId}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        });
+
+        if (!responseEdit.ok) {
+            const errorData = await responseEdit.json();
+            alert("Error: " + errorData.detail);
+            return;
+        }
+
+        closeModal('transferEntryModal');
+        loadAllData();
+        currentEntryId = null;
+        priorityType = null;
+    } catch (error) {
+        console.error("Error fetching item:", error);
+    }
+});
 
 /* ================= AUTO HTTP REFRESH ================= */
 
