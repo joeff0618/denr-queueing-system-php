@@ -22,6 +22,8 @@ if ($method === 'POST' && $action === 'login') {
 
 if ($method === 'GET' && $action === 'profile') {
     $userId = require_login();
+    $stmt = $pdo->prepare('UPDATE queueing_users SET last_seen = NOW() WHERE id = ?');
+    $stmt->execute([$userId]);
     $stmt = $pdo->prepare('SELECT * FROM queueing_users WHERE id = ?');
     $stmt->execute([$userId]);
     $user = $stmt->fetch();

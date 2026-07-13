@@ -1148,6 +1148,7 @@ document.getElementById("transferEntryModal").addEventListener("submit", async f
 /* ================= AUTO HTTP REFRESH ================= */
 
 let pollingInterval = null;
+let lastHeartbeat = 0;
 
 function startPolling() {
     if (pollingInterval) {
@@ -1157,6 +1158,12 @@ function startPolling() {
     pollingInterval = setInterval(async () => {
         try {
             await loadAllData(false);
+            
+            const now = Date.now();
+            if (now - lastHeartbeat >= 5000) {
+                lastHeartbeat = now;
+                fetch("../api/auth/profile").catch(err => console.error("Heartbeat failed", err));
+            }
         } catch (error) {
             console.error("Error refreshing data:", error);
         }
