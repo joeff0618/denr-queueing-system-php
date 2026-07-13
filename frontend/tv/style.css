@@ -82,6 +82,11 @@ p {
     cursor: pointer;
 }
 
+.overlay-logo {
+    width: 100px; 
+    margin-bottom: 20px;
+}
+
 /* ---------- Layout Grid ---------- */
 .tv-container {
     display: grid;

@@ -702,6 +702,11 @@ tr.priority-row td:first-child {
     gap: 12px;
 }
 
+.entry-action-buttons {
+    display: flex; 
+    gap: 8px;
+}
+
 #pageInfo,
 .total-count {
     color: var(--muted);
