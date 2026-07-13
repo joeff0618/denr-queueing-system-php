@@ -57,8 +57,8 @@ if ($method === 'POST' && $action === 'register') {
          VALUES (?, ?, ?, ?, ?, NULL)'
     );
     $stmt->execute([
-        $body['email'] ?? '',
-        $body['name'] ?? '',
+        strip_tags(trim((string) ($body['email'] ?? ''))),
+        strip_tags(trim((string) ($body['name'] ?? ''))),
         password_hash((string) ($body['password'] ?? ''), PASSWORD_BCRYPT),
         strtolower((string) ($body['division'] ?? '')),
         date('Y-m-d H:i:s.u'),
@@ -80,7 +80,11 @@ if (($action === 'users') && isset($parts[2])) {
             fail(400, 'Email already registered by another user');
         }
         $fields = ['email = ?', 'name = ?', 'division = ?'];
-        $params = [$body['email'] ?? '', $body['name'] ?? '', strtolower((string) ($body['division'] ?? ''))];
+        $params = [
+            strip_tags(trim((string) ($body['email'] ?? ''))),
+            strip_tags(trim((string) ($body['name'] ?? ''))),
+            strtolower((string) ($body['division'] ?? ''))
+        ];
         if (!empty($body['password'])) {
             $fields[] = 'password = ?';
             $params[] = password_hash((string) $body['password'], PASSWORD_BCRYPT);

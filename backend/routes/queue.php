@@ -29,8 +29,8 @@ if ($method === 'POST' && $action === 'add') {
     );
     $stmt->execute([
         $queueNo,
-        substr((string) ($body['client_name'] ?? ''), 0, 40),
-        substr((string) ($body['purpose'] ?? ''), 0, 100),
+        substr(strip_tags(trim((string) ($body['client_name'] ?? ''))), 0, 40),
+        substr(strip_tags(trim((string) ($body['purpose'] ?? ''))), 0, 100),
         Status::PENDING->value,
         strtolower((string) ($body['division'] ?? Division::LOBBY->value)),
         strtolower((string) ($body['priority'] ?? PriorityType::REGULAR->value)),
@@ -74,8 +74,8 @@ if ($method === 'PUT' && $action === 'edit' && isset($parts[2])) {
     $body = json_body();
     $stmt = $pdo->prepare('UPDATE queueing_queue_items SET client_name = ?, purpose = ?, division = ?, priority = ? WHERE id = ?');
     $stmt->execute([
-        substr((string) ($body['client_name'] ?? ''), 0, 40),
-        substr((string) ($body['purpose'] ?? ''), 0, 100),
+        substr(strip_tags(trim((string) ($body['client_name'] ?? ''))), 0, 40),
+        substr(strip_tags(trim((string) ($body['purpose'] ?? ''))), 0, 100),
         strtolower((string) ($body['division'] ?? '')),
         strtolower((string) ($body['priority'] ?? PriorityType::REGULAR->value)),
         (int) $parts[2],
