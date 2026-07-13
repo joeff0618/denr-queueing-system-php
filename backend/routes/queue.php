@@ -9,7 +9,9 @@ if ($method === 'GET' && $action === 'test') {
 }
 
 if ($method === 'GET' && $action === 'available-cards') {
-    $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "') AND queue_no IS NOT NULL");
+    $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items 
+        WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "') 
+        AND queue_no IS NOT NULL");
     $used = array_map('intval', array_column($stmt->fetchAll(), 'queue_no'));
     $all = range(1, (int) $config['max_available_cards']);
     respond(['available_cards' => array_values(array_diff($all, $used))]);
@@ -18,7 +20,9 @@ if ($method === 'GET' && $action === 'available-cards') {
 if ($method === 'POST' && $action === 'add') {
     $body = json_body();
     $queueNo = (int) ($body['queue_no'] ?? 0);
-    $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "') AND queue_no IS NOT NULL");
+    $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items 
+        WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "') 
+        AND queue_no IS NOT NULL");
     $used = array_map('intval', array_column($stmt->fetchAll(), 'queue_no'));
     if (!in_array($queueNo, range(1, (int) $config['max_available_cards']), true) || in_array($queueNo, $used, true)) {
         fail(400, "Card #$queueNo is currently in use");
@@ -42,7 +46,9 @@ if ($method === 'POST' && $action === 'add') {
 if ($method === 'GET' && in_array($action, ['active', 'today', 'all'], true)) {
     [$start, $end] = today_bounds();
     if ($action === 'active') {
-        $stmt = $pdo->prepare("SELECT * FROM queueing_queue_items WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "') AND created_at BETWEEN ? AND ? ORDER BY created_at");
+        $stmt = $pdo->prepare("SELECT * FROM queueing_queue_items 
+            WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "') 
+            AND created_at BETWEEN ? AND ? ORDER BY created_at");
         $stmt->execute([$start, $end]);
     } elseif ($action === 'today') {
         $stmt = $pdo->prepare('SELECT * FROM queueing_queue_items WHERE created_at BETWEEN ? AND ? ORDER BY created_at');
@@ -100,19 +106,23 @@ if ($method === 'PUT' && $action === 'call-next') {
 
 if ($method === 'PUT' && $action === 'skip-and-call-next') {
     [$start, $end] = today_bounds();
-    $stmt = $pdo->prepare("SELECT * FROM queueing_queue_items WHERE LOWER(status) = '" . Status::PROCESSING->value . "' AND created_at BETWEEN ? AND ? ORDER BY created_at LIMIT 1");
+    $stmt = $pdo->prepare("SELECT * FROM queueing_queue_items 
+        WHERE LOWER(status) = '" . Status::PROCESSING->value . "' AND created_at BETWEEN ? AND ? ORDER BY created_at LIMIT 1");
     $stmt->execute([$start, $end]);
     $current = $stmt->fetch();
     if (!$current) {
         respond(['skipped' => false, 'next' => null, 'detail' => 'No current item is processing.']);
     }
     update_status($pdo, (int) $current['id'], Status::PENDING->value);
-    $stmt = $pdo->prepare("SELECT id FROM queueing_queue_items WHERE LOWER(status) = '" . Status::PENDING->value . "' AND created_at BETWEEN ? AND ? AND skip_count > 0");
+    $stmt = $pdo->prepare("SELECT id FROM queueing_queue_items 
+        WHERE LOWER(status) = '" . Status::PENDING->value . "' AND created_at BETWEEN ? AND ? AND skip_count > 0");
     $stmt->execute([$start, $end]);
     $exclude = array_map('intval', array_column($stmt->fetchAll(), 'id'));
     $next = call_next($pdo, $exclude);
     if (!$next) {
-        $pdo->prepare("UPDATE queueing_queue_items SET skip_count = 0 WHERE LOWER(status) = '" . Status::PENDING->value . "' AND created_at BETWEEN ? AND ? AND skip_count > 0")->execute([$start, $end]);
+        $pdo->prepare("UPDATE queueing_queue_items SET skip_count = 0 
+            WHERE LOWER(status) = '" . Status::PENDING->value . "' AND created_at BETWEEN ? AND ? AND skip_count > 0")
+            ->execute([$start, $end]);
         $next = call_next($pdo);
     }
     $next ? respond(item_with_score($next)) : respond(['skipped' => true, 'next' => null, 'detail' => 'Skipped, but no one else is waiting.']);

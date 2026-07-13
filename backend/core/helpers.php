@@ -30,3 +30,10 @@ function require_login(): int
     }
     return (int) $_SESSION['user_id'];
 }
+
+function get_users(PDO $pdo): array
+{
+    $stmt = $pdo->query("SELECT *, CASE WHEN last_seen >= DATE_SUB(NOW(), INTERVAL 10 SECOND)
+                THEN 'online' ELSE 'offline' END AS status FROM queueing_users ORDER BY name");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}

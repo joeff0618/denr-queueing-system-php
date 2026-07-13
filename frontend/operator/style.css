@@ -1689,11 +1689,3 @@ textarea {
     background: var(--surface-muted);
     color: var(--text);
 }
-
-.modal-content select,
-.modal-content input {
-    margin-bottom: 16px;
-}
-
-
-
