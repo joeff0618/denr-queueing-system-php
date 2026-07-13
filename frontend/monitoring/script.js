@@ -231,28 +231,24 @@ function updateMonitoringDashboard() {
             e.stopPropagation();
             // Clicking the selected button deselects it
             if (selectedEntryId === item.id) {
+                console.log("Deselected");
                 selectedEntryId = null;
                 currentQueueNumber = null;
 
+                document.getElementById("completeBtn").disabled = true;
+                document.getElementById("returnBtn").disabled = true;
                 btn.classList.remove("active");
             } else {
+                console.log("Selected:",item.id);
                 selectedEntryId = item.id;
                 currentQueueNumber = item.queue_no;
 
-                document
-                    .querySelectorAll(".queue-number")
-                    .forEach(b => b.classList.remove("active"));
-
+                document.querySelectorAll(".queue-number").forEach(b => b.classList.remove("active"));
+                document.getElementById("completeBtn").disabled = false;
+                document.getElementById("returnBtn").disabled = false;
                 btn.classList.add("active");
             }
 
-            if (item && item.status.toLowerCase() === "forwarded") {
-                document.getElementById("completeBtn").disabled = false;
-                document.getElementById("returnBtn").disabled = false;
-            } else {
-                document.getElementById("completeBtn").disabled = true;
-                document.getElementById("returnBtn").disabled = true;
-            }
             // Keep the table selection in sync with the number-grid selection
             renderTable();
         });
@@ -527,7 +523,11 @@ function renderTable() {
             row.cells[8].textContent = formatDatetime(item.completed_at);
 
             row.classList.toggle('priority-row', isPriority);
-            if (selectedEntryId === item.id) row.classList.add('selected-row'); else row.classList.remove('selected-row');
+            if (selectedEntryId === item.id) { 
+                row.classList.add('selected') 
+            } else { 
+                row.classList.remove('selected');
+            }
         });
 
         // Remove rows not on current page
