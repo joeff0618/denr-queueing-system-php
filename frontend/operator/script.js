@@ -43,6 +43,11 @@ let userDivision = localStorage.getItem("userDiv");
 /* ================= PAGE SWITCH ================= */
 
 function showPage(id) {
+    if (id === "userPage" && (!userDivision || userDivision.toLowerCase() !== "sadmin")) {
+        alert("Access Denied: Administrative privileges required.");
+        return;
+    }
+
     document.querySelectorAll(".page")
         .forEach(p => p.classList.remove("active"));
 
