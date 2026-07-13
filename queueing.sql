@@ -38,6 +38,8 @@ INSERT INTO queueing_users VALUES(4,'lpdd@email.com','LPDD','$2b$12$eyNEz27wWsOY
 CREATE INDEX ix_queueing_queue_items_queue_no ON queueing_queue_items (queue_no);
 CREATE INDEX ix_queueing_queue_items_id ON queueing_queue_items (id);
 CREATE INDEX ix_queueing_queue_items_client_name ON queueing_queue_items (client_name);
+CREATE INDEX ix_queue_items_status_created ON queueing_queue_items (status, created_at);
+CREATE INDEX ix_queue_items_division_status ON queueing_queue_items (division, status);
 CREATE INDEX ix_queueing_users_id ON queueing_users (id);
 CREATE UNIQUE INDEX ix_queueing_users_email ON queueing_users (email);
 
