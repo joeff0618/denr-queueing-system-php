@@ -31,7 +31,7 @@ if ($method === 'GET' && $action === 'profile') {
 }
 
 if ($method === 'GET' && $action === 'users') {
-    $currentId = require_login();
+    $currentId = require_sadmin($pdo);
     $rows = $pdo->query('SELECT * FROM queueing_users ORDER BY id')->fetchAll();
     respond(array_map(fn($u) => normalize_user($u, (int) $u['id'] === $currentId ? 'online' : 'offline'), $rows));
 }
@@ -45,7 +45,7 @@ if ($method === 'POST' && $action === 'logout') {
 }
 
 if ($method === 'POST' && $action === 'register') {
-    require_login();
+    require_sadmin($pdo);
     $body = json_body();
     $stmt = $pdo->prepare('SELECT id FROM queueing_users WHERE email = ?');
     $stmt->execute([$body['email'] ?? '']);
@@ -69,6 +69,9 @@ if ($method === 'POST' && $action === 'register') {
 if (($action === 'users') && isset($parts[2])) {
     $userId = (int) $parts[2];
     $currentId = require_login();
+    if ($currentId !== $userId) {
+        require_sadmin($pdo);
+    }
     if ($method === 'PUT') {
         $body = json_body();
         $stmt = $pdo->prepare('SELECT id FROM queueing_users WHERE email = ? AND id <> ?');
@@ -92,6 +95,7 @@ if (($action === 'users') && isset($parts[2])) {
         respond(normalize_user(get_item_user($pdo, $userId) ?? []));
     }
     if ($method === 'DELETE') {
+        require_sadmin($pdo);
         if ($currentId === $userId) {
             fail(400, 'Cannot delete your own account');
         }

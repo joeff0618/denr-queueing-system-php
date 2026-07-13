@@ -30,3 +30,13 @@ function require_login(): int
     }
     return (int) $_SESSION['user_id'];
 }
+
+function require_sadmin(PDO $pdo): int
+{
+    $userId = require_login();
+    if (empty($_SESSION['division']) || strtolower($_SESSION['division']) !== 'sadmin') {
+        fail(403, 'Forbidden: Administrative privileges required');
+    }
+    return $userId;
+}
+
