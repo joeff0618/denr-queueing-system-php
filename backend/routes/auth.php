@@ -4,51 +4,20 @@ declare(strict_types=1);
 $action = $parts[1] ?? '';
 
 if ($method === 'POST' && $action === 'login') {
-
     $body = json_body();
-
-    $stmt = $pdo->prepare("
-        SELECT *
-        FROM queueing_users
-        WHERE email = ?
-        LIMIT 1
-    ");
-
+    $stmt = $pdo->prepare('SELECT * FROM queueing_users WHERE email = ? LIMIT 1');
     $stmt->execute([$body['email'] ?? '']);
-
     $user = $stmt->fetch();
-
-    if (
-        !$user ||
-        !password_verify(
-            (string)($body['password'] ?? ''),
-            (string)$user['password']
-        )
-    ) {
+    if (!$user || !password_verify((string)($body['password'] ?? ''), (string)$user['password'])) {
         fail(401, 'Incorrect email or password');
     }
-
-
     $_SESSION['user_id'] = (int)$user['id'];
     $_SESSION['email'] = $user['email'];
     $_SESSION['name'] = $user['name'];
     $_SESSION['division'] = normalize_division($user['division']);
-
-
-    $stmt = $pdo->prepare("
-        UPDATE queueing_users
-        SET last_seen = NOW()
-        WHERE id = ?
-    ");
-
+    $stmt = $pdo->prepare('UPDATE queueing_users SET last_seen = NOW() WHERE id = ?');
     $stmt->execute([$user['id']]);
-
-
-    respond([
-        'message' => 'Login successful',
-        'user' => normalize_user($user, 'online'),
-        'sse' => true
-    ]);
+    respond(['message' => 'Login successful', 'user' => normalize_user($user, 'online'), 'sse' => true]);
 }
 
 if ($method === 'GET' && $action === 'profile') {

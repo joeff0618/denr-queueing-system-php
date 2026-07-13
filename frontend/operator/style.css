@@ -895,8 +895,8 @@ textarea {
 .modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 18px;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
 }
 
 /* STATISTICS MODAL */
@@ -1170,6 +1170,12 @@ textarea {
     font-weight: 800;
 }
 
+.password-reminder {
+    font-size: 0.8rem; 
+    color: var(--muted); 
+    font-weight: normal;
+}
+
 .input-wrapper {
     position: relative;
 }
@@ -1406,6 +1412,11 @@ textarea {
     color: var(--text);
     font-size: 0.88rem;
     cursor: pointer;
+}
+
+.user-action-buttons {
+    display: flex; 
+    gap: 8px;
 }
 
 @media (max-width: 768px) {

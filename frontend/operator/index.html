@@ -54,7 +54,7 @@
             <span>User List</span>
         </button>
         
-        <button onclick="openStatsModal()">
+        <button onclick="openModal('statsModal')">
             <img src="../assets/svg/stats-icon.svg" alt="Statistics Icon" class="sidebar-icon">
             <span>Statistics</span>
         </button>
@@ -66,7 +66,7 @@
             <span>Edit Entry</span>
         </button>
 
-        <button id="deleteSelectedBtn" onclick="deleteSelected()" class="hidden-sidebar-btn">
+        <button id="deleteSelectedBtn" onclick="deleteSelected()" data-allowed-div="sadmin" class="hidden-sidebar-btn">
             <img src="../assets/svg/delete-left-svgrepo-com.svg" alt="Add Entry Icon" class="sidebar-icon">
             <span>Delete Entry</span>
         </button>
@@ -230,9 +230,12 @@
                     <tr>
                         <th style="width: 8%">No.</th>
                         <th style="width: 12%">Status</th>
-                        <th class="sortable" style="width: 25%" data-key="name" onclick="sortUsersBy('name')">Name & Email <span class="sort-icon" id="sort-icon-user-name"></span></th>
-                        <th class="sortable" style="width: 15%" data-key="division" onclick="sortUsersBy('division')">Division <span class="sort-icon" id="sort-icon-user-division"></span></th>
-                        <th class="sortable" style="width: 18%" data-key="created_at" onclick="sortUsersBy('created_at')">Created At <span class="sort-icon" id="sort-icon-user-created_at"></span></th>
+                        <th class="sortable" style="width: 25%" data-key="name" onclick="sortUsersBy('name')">Name & Email 
+                            <span class="sort-icon" id="sort-icon-user-name"></span></th>
+                        <th class="sortable" style="width: 15%" data-key="division" onclick="sortUsersBy('division')">Division 
+                            <span class="sort-icon" id="sort-icon-user-division"></span></th>
+                        <th class="sortable" style="width: 18%" data-key="created_at" onclick="sortUsersBy('created_at')">Created At 
+                            <span class="sort-icon" id="sort-icon-user-created_at"></span></th>
                         <th style="width: 10%">Last Seen</th>
                     </tr>
                 </thead>
@@ -242,7 +245,7 @@
 
         <!-- PAGINATION -->
         <div class="pagination" id="userPagination">
-            <div class="user-action-buttons" style="display: flex; gap: 8px;">
+            <div class="user-action-buttons">
                 <button id="registerUserBtn" onclick="openModal('userRegisterModal')">Register User</button>
                 <button id="editUserBtn" onclick="openUserEditModal()" disabled>Edit</button>
                 <button id="deleteUserBtn" onclick="openUserDeleteModal()" disabled>Delete</button>
@@ -568,7 +571,7 @@
             </div>
 
             <div class="form-group">
-                <label>Password <span style="font-size: 0.8rem; color: var(--muted); font-weight: normal;">
+                <label>Password <span class="password-reminder">
                     (Leave blank to keep current password)</span>
                 </label>
                 <div class="input-wrapper">
@@ -616,7 +619,7 @@
         </p>
 
         <div class="modal-actions">
-            <button class="delete-btn" style="background: var(--danger); color: white;" onclick="deleteSelectedUser()">Delete</button>
+            <button class="delete-btn" onclick="deleteSelectedUser()">Delete</button>
             <button class="cancel-btn" onclick="closeModal('userDeleteModal')">Cancel</button>
         </div>
     </div>
@@ -675,7 +678,7 @@
                 </div>
             </div>
 
-            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+            <div class="modal-actions">
                 <button type="button" class="clear-filter-btn" onclick="clearFilters()">Clear Filters</button>
                 <button type="button" class="cancel-btn" onclick="closeModal('filterModal')">Cancel</button>
                 <button type="submit" class="save-btn">Apply Filters</button>

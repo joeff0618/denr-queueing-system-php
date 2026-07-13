@@ -403,11 +403,6 @@ async function saveAnnouncement() {
 // Chart.js instance
 let statsChart = null;
 
-function openStatsModal() {
-    loadStatistics("today");
-    document.getElementById("statsModal").style.display = "flex";
-}
-
 // Load statistics based on selected range
 async function loadStatistics(period = "today") {
     try {
@@ -1037,7 +1032,7 @@ function clearSelection(){
     selectedEntryId = null;
     togglePanelButtons();
     document.getElementById("editSelectedBtn").classList.remove("show");
-    document.getElementById("deleteSelectedBtn").classList.remove("show");
+    document.getElementById("deleteSelectedBtn")?.classList.remove("show");
     document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
     const flashBtn = document.getElementById("flashBtn");
     if (flashBtn) flashBtn.textContent = "Flash Next";
@@ -1656,14 +1651,12 @@ function applyDepartmentAccess() {
     if (!userDiv) return;
 
     document.querySelectorAll("[data-allowed-div]").forEach(element => {
-        // Get the list of allowed departments for this element
-        const allowedDepts = element.getAttribute("data-allowed-div").split(",");
+        const allowedDepts = element.dataset.allowedDiv
+            .split(",")
+            .map(d => d.trim().toLowerCase());
 
-        // Toggle visibility
-        if (allowedDepts.includes(userDiv.toLowerCase())) {
-            element.style.display = ""; // Restore default display
-        } else {
-            element.style.display = "none"; // Hide button
+        if (!allowedDepts.includes(userDiv.toLowerCase())) {
+            element.remove();
         }
     });
 }
