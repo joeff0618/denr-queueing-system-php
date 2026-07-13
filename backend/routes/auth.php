@@ -8,15 +8,16 @@ if ($method === 'POST' && $action === 'login') {
     $stmt = $pdo->prepare('SELECT * FROM queueing_users WHERE email = ? LIMIT 1');
     $stmt->execute([$body['email'] ?? '']);
     $user = $stmt->fetch();
-    if (!$user || !password_verify((string) ($body['password'] ?? ''), (string) $user['password'])) {
+    if (!$user || !password_verify((string)($body['password'] ?? ''), (string)$user['password'])) {
         fail(401, 'Incorrect email or password');
     }
-    $_SESSION['user_id'] = (int) $user['id'];
+    $_SESSION['user_id'] = (int)$user['id'];
     $_SESSION['email'] = $user['email'];
     $_SESSION['name'] = $user['name'];
     $_SESSION['division'] = normalize_division($user['division']);
-    $pdo->prepare('UPDATE queueing_users SET last_seen = ? WHERE id = ?')->execute([date('Y-m-d H:i:s.u'), $user['id']]);
-    respond(['message' => 'Login successful', 'user' => normalize_user($user, 'online')]);
+    $stmt = $pdo->prepare('UPDATE queueing_users SET last_seen = NOW() WHERE id = ?');
+    $stmt->execute([$user['id']]);
+    respond(['message' => 'Login successful', 'user' => normalize_user($user, 'online'), 'sse' => true]);
 }
 
 if ($method === 'GET' && $action === 'profile') {
@@ -32,13 +33,16 @@ if ($method === 'GET' && $action === 'profile') {
 
 if ($method === 'GET' && $action === 'users') {
     $currentId = require_sadmin($pdo);
-    $rows = $pdo->query('SELECT * FROM queueing_users ORDER BY id')->fetchAll();
-    respond(array_map(fn($u) => normalize_user($u, (int) $u['id'] === $currentId ? 'online' : 'offline'), $rows));
+    $stmt = $pdo->prepare('UPDATE queueing_users SET last_seen = NOW() WHERE id = ?');
+    $stmt->execute([$currentId]);
+    $users = get_users($pdo);
+    respond(array_map(fn($u) => normalize_user($u, $u['status']), $users));
 }
 
 if ($method === 'POST' && $action === 'logout') {
     if (!empty($_SESSION['user_id'])) {
-        $pdo->prepare('UPDATE queueing_users SET last_seen = ? WHERE id = ?')->execute([date('Y-m-d H:i:s.u'), $_SESSION['user_id']]);
+        $stmt = $pdo->prepare('UPDATE queueing_users SET last_seen = DATE_SUB(NOW(), INTERVAL 1 DAY) WHERE id = ?');
+        $stmt->execute([$_SESSION['user_id']]);
     }
     session_destroy();
     respond(['message' => 'Logged out successfully']);
