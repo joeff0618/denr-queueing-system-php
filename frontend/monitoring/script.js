@@ -94,6 +94,18 @@ document.addEventListener("DOMContentLoaded", () => {
         // Otherwise clear selection
         selectRow(null, null);
     });
+    // Deselect when clicking outside of rows or controls
+    document.addEventListener('click', (e) => {
+        // If click is inside a table row, a queue number button, or any form/control element, keep selection
+        if (e.target.closest('tr[data-entry-id]') || e.target.closest('.queue-number') || e.target.closest('button') 
+            || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select') 
+            || e.target.closest('label')) {
+            return;
+        }
+
+        // Otherwise clear selection
+        selectRow(null, null);
+    });
 });
 
 /* ================= DATA FETCHING ================= */

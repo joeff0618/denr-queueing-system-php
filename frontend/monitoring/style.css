@@ -285,7 +285,6 @@ select:focus-visible {
 
 .controls {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
     margin-bottom: 14px;
@@ -354,14 +353,8 @@ input, textarea, select,
 
 .controls select,
 #rowsPerPage {
-    width: auto;
     padding: 8px 34px 8px 11px;
     cursor: pointer;
-    width: auto;
-}
-
-.controls select {
-    min-width: 150px;
 }
 
 .today-toggle {
@@ -369,8 +362,7 @@ input, textarea, select,
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 40px;
-    margin-bottom: 0;
+    min-height: 40px;
     padding: 8px 12px;
     border: 1px solid var(--line);
     border-radius: var(--radius);
