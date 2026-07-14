@@ -279,3 +279,78 @@ body::before {
 .client-redirect-btn {
     bottom: 92px;
 }
+
+/* Collaboration Badge (Bottom Right) */
+.collab-badge {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: none;
+    border: none;
+    box-shadow: none;
+    opacity: 1; /* 100% opacity on idle */
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+    cursor: pointer; /* Change cursor to pointer to signify interactiveness */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.collab-badge:hover {
+    transform: translateY(-2px) scale(1.08); /* Makes it bigger on hover */
+}
+
+.collab-badge:active {
+    transform: translateY(0) scale(0.93); /* Tactile pop animation on click */
+    transition: transform 0.08s ease;
+}
+
+.collab-logo {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.collab-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.35;
+}
+
+.collab-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.collab-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+/* Mobile Responsiveness for Collaboration Badge */
+@media (max-width: 600px) {
+    .collab-badge {
+        bottom: 16px;
+        right: 16px;
+        gap: 10px;
+    }
+    .collab-logo {
+        width: 32px;
+        height: 32px;
+    }
+    .collab-label {
+        font-size: 0.65rem;
+    }
+    .collab-name {
+        font-size: 0.8rem;
+    }
+}
+
