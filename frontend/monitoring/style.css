@@ -355,6 +355,7 @@ input, textarea, select,
 #rowsPerPage {
     padding: 8px 34px 8px 11px;
     cursor: pointer;
+    width: auto;
 }
 
 .today-toggle {

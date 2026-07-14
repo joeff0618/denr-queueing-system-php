@@ -362,6 +362,7 @@ function openModal(modalId) {
 
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = "none";
+    if(modalId === "statsModal") resetStatisticsFilters();
 }
 
 function toggleClearButton(input) {
@@ -420,6 +421,18 @@ async function loadStatistics(period = "today") {
     } catch (error) {
         console.error("Error loading statistics:", error);
     }
+}
+
+function resetStatisticsFilters() {
+    currentRange = "today";
+    filterButtons.forEach(btn => {
+        btn.classList.remove("active");
+        if (btn.dataset.range === "today") {
+            btn.classList.add("active");
+        }
+    });
+
+    loadStatistics(currentRange);
 }
 
 function renderChart(data) {
