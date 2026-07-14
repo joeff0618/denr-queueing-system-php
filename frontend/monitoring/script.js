@@ -231,7 +231,6 @@ function updateMonitoringDashboard() {
             e.stopPropagation();
             // Clicking the selected button deselects it
             if (selectedEntryId === item.id) {
-                console.log("Deselected");
                 selectedEntryId = null;
                 currentQueueNumber = null;
 
@@ -239,7 +238,6 @@ function updateMonitoringDashboard() {
                 document.getElementById("returnBtn").disabled = true;
                 btn.classList.remove("active");
             } else {
-                console.log("Selected:",item.id);
                 selectedEntryId = item.id;
                 currentQueueNumber = item.queue_no;
 

@@ -1500,10 +1500,11 @@ textarea {
     display: none;
 }
 
-.csv-date-field {
+.csv-date-field, .filter-date-field {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    margin-bottom: 10px;
 }
 
 .csv-date-field label {
