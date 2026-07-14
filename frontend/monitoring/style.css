@@ -285,6 +285,7 @@ select:focus-visible {
 
 .controls {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
     margin-bottom: 14px;
@@ -353,8 +354,13 @@ input, textarea, select,
 
 .controls select,
 #rowsPerPage {
+    width: auto;
     padding: 8px 34px 8px 11px;
     cursor: pointer;
+}
+
+.controls select {
+    min-width: 150px;
 }
 
 .today-toggle {
@@ -362,7 +368,8 @@ input, textarea, select,
     align-items: center;
     justify-content: center;
     gap: 8px;
-    min-height: 40px;
+    height: 40px;
+    margin-bottom: 0;
     padding: 8px 12px;
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -1189,20 +1196,6 @@ tr.priority-row td:first-child {
 @media (max-width: 1050px) {
     .stats-grid {
         grid-template-columns: repeat(3, minmax(140px, 1fr));
-    }
-
-    .controls {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .filter-group,
-    .today-toggle {
-        width: 100%;
-    }
-
-    .filter-group select {
-        flex: 1 1 160px;
     }
 }
 
