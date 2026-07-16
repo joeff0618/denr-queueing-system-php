@@ -186,7 +186,7 @@ p {
     font-weight: 300;
     letter-spacing: 0.1875rem;
     text-transform: uppercase;
-    background-color: rgba(34, 197, 94, 0.2);
+    background-color: rgba(239, 68, 68, 0.2);
     display: flex;
     justify-content: center;
 }
@@ -196,23 +196,23 @@ p {
         box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.1),
                     inset 0 1px 0 rgba(255, 255, 255, 0.5),
                     inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-                    0 0 0px rgba(34, 197, 94, 0);
+                    0 0 0px rgba(239, 68, 68, 0);
         background: rgba(255, 255, 255, 0.05);
         border-color: rgba(255, 255, 255, 0.1);
     }
     50% {
-        box-shadow: 0 0.5rem 2.5rem rgba(34, 197, 94, 0.15),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-                    inset 0 -1px 0 rgba(255, 255, 255, 0.15),
-                    0 0 20px rgba(34, 197, 94, 0.35);
-        background: rgba(34, 197, 94, 0.08);
-        border-color: rgba(34, 197, 94, 0.4);
+        box-shadow: 0 0.5rem 3rem rgba(239, 68, 68, 0.35),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+                    inset 0 -1px 0 rgba(255, 255, 255, 0.2),
+                    0 0 35px rgba(239, 68, 68, 0.75);
+        background: rgba(239, 68, 68, 0.18);
+        border-color: rgba(239, 68, 68, 0.9);
     }
     100% {
         box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.1),
                     inset 0 1px 0 rgba(255, 255, 255, 0.5),
                     inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-                    0 0 0px rgba(34, 197, 94, 0);
+                    0 0 0px rgba(239, 68, 68, 0);
         background: rgba(255, 255, 255, 0.05);
         border-color: rgba(255, 255, 255, 0.1);
     }
