@@ -1386,6 +1386,7 @@ textarea {
 }
 
 #userPageInfo,
+#divisionPageInfo,
 .total-count {
     color: var(--muted);
     font-size: 0.88rem;
