@@ -915,11 +915,8 @@ tr.priority-row td:first-child {
 }
 
 .filter-btn:hover {
-    background: #f3f4f6;
-}
-
-.filter-btn:active {
-    transform: scale(0.96);
+    background: var(--surface-muted);
+    border-color: var(--muted);
 }
 
 .filter-btn.active {

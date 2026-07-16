@@ -358,6 +358,7 @@ function syncPanelButtonsForSelection() {
 /* UTILITIES (MODALS) */
 function openModal(modalId) {
     document.getElementById(modalId).style.display = "flex";
+    if(modalId === "statsModal") resetStatisticsFilters();
 }
 
 function closeModal(modalId) {

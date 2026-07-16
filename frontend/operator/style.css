@@ -1656,13 +1656,9 @@ textarea {
 }
 
 .filter-btn.active {
-    background: #e6f4f2;
-    color: var(--primary);
-    border-color: #99d8d0;
-}
-
-.filter-btn.active:hover {
-    background: #d1efe9;
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
 }
 
 .filter-indicator {
