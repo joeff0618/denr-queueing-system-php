@@ -53,8 +53,11 @@ function updateDisplay(activeItems) {
   const officeHeader = document.getElementById('office-header');
   if (officeHeader) officeHeader.innerText = 'OFFICE';
 
-  const officeDivisions = ['legal', 'admin', 'pmd', 'rscig', 'lobby'];
   const mainDivisions = ['smd', 'lpdd', 'a0504'];
+  const isOfficeDivision = (div) => {
+      const d = div.toLowerCase();
+      return !['smd', 'r-smd', 'sr-smd', 'lpdd', 'a0504'].includes(d);
+  };
 
   // Track the absolute next pending item across all divisions (priority items first)
   let absoluteNextPending = null;
@@ -75,7 +78,7 @@ function updateDisplay(activeItems) {
             chimedItems.add(item.id);
           }
         
-          if (officeDivisions.includes(lowerDiv)) {
+          if (isOfficeDivision(lowerDiv)) {
               // Show item in the top office announcement area - PREPENDED
               document.getElementById('office-body').innerHTML = `
                 <div class="queue-item now-serving">
@@ -164,7 +167,7 @@ function updateDisplay(activeItems) {
                 </div>
               `;
           }
-      } else if (officeDivisions.includes(lowerDiv)) {
+      } else if (isOfficeDivision(lowerDiv)) {
           document.getElementById('office-body').innerHTML += `
             <div class="coming-up-next">
               Coming up next... <strong>${absoluteNextPending.queue_no}</strong>
