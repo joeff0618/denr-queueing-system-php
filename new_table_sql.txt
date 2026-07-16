@@ -12,8 +12,8 @@ ALTER TABLE queueing_users MODIFY COLUMN division VARCHAR(50);
 -- 3. Seed initial divisions
 INSERT INTO queueing_divisions (name, display_name) VALUES
 ('smd', 'SMD'),
-('r-smd', 'Regular SMD'),
-('sr-smd', 'Senior/PWD SMD'),
+('r-smd', 'R-SMD'),
+('sr-smd', 'SR-SMD'),
 ('lpdd', 'LPDD'),
 ('a0504', 'A0504'),
 ('lobby', 'Lobby'),
