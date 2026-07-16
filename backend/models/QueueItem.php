@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Resets physical queue numbers (queue_no) to NULL for past dates.
+ * Applies to pending, processing, and forwarded items created before today.
+ * 
+ * @param PDO $pdo PDO database connection.
+ * @return void
+ */
 function reset_past_cards(PDO $pdo): void
 {
     $today = date('Y-m-d 00:00:00');
@@ -14,6 +21,13 @@ function reset_past_cards(PDO $pdo): void
     $stmt->execute([$today]);
 }
 
+/**
+ * Retrieves a single queue item by its ID.
+ * 
+ * @param PDO $pdo PDO database connection.
+ * @param int $id The queue item ID.
+ * @return array|null The queue item row or null if not found.
+ */
 function get_item(PDO $pdo, int $id): ?array
 {
     $stmt = $pdo->prepare('SELECT * FROM queueing_queue_items WHERE id = ?');
@@ -22,6 +36,15 @@ function get_item(PDO $pdo, int $id): ?array
     return $row ?: null;
 }
 
+/**
+ * Updates the status of a queue item.
+ * Manages side effects like incrementing skip count or setting completion timestamp.
+ * 
+ * @param PDO $pdo PDO database connection.
+ * @param int $id The queue item ID.
+ * @param string $status Target status (e.g., 'pending', 'processing', 'completed', 'deferred').
+ * @return array|null The updated queue item row, or null on failure.
+ */
 function update_status(PDO $pdo, int $id, string $status): ?array
 {
     $current = get_item($pdo, $id);
@@ -51,6 +74,14 @@ function update_status(PDO $pdo, int $id, string $status): ?array
     return get_item($pdo, $id);
 }
 
+/**
+ * Identifies and calls the next pending queue item for the day based on priority score.
+ * Updates the item's status to processing.
+ * 
+ * @param PDO $pdo PDO database connection.
+ * @param array $excludeIds List of queue item IDs to exclude from selection.
+ * @return array|null The called queue item row, or null if queue is empty.
+ */
 function call_next(PDO $pdo, array $excludeIds = []): ?array
 {
     [$start, $end] = today_bounds();
@@ -81,6 +112,14 @@ function call_next(PDO $pdo, array $excludeIds = []): ?array
     return update_status($pdo, (int) $items[0]['id'], Status::PROCESSING->value);
 }
 
+/**
+ * Generates aggregated queue statistics for a given range (e.g. today, yesterday, month) and division.
+ * 
+ * @param PDO $pdo PDO database connection.
+ * @param string $range Timeframe range ('today', 'yesterday', '7days', 'month', 'year').
+ * @param string $div Division code filter.
+ * @return array Formatted statistical dataset for graphing.
+ */
 function queue_statistics(PDO $pdo, string $range, string $div): array
 {
     $now = new DateTimeImmutable();

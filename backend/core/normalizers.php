@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Normalizes a status string to match the Status enum values.
+ * Returns the matched status value, or the original lowercase string.
+ *
+ * @param string|null $status Raw status string
+ * @return string Normalized status
+ */
 function normalize_status(?string $status): string
 {
     $val = strtolower((string) $status);
@@ -8,6 +15,13 @@ function normalize_status(?string $status): string
     return $enum ? $enum->value : $val;
 }
 
+/**
+ * Normalizes a division string to match the Division enum values.
+ * Returns the matched division value, or the original lowercase string.
+ *
+ * @param string|null $division Raw division name
+ * @return string Normalized division
+ */
 function normalize_division(?string $division): string
 {
     $val = strtolower((string) $division);
@@ -15,6 +29,12 @@ function normalize_division(?string $division): string
     return $enum ? $enum->value : $val;
 }
 
+/**
+ * Normalizes database fields of a queue item row into consistent types and structures.
+ *
+ * @param array $row Database row from queueing_queue_items
+ * @return array Normalized queue item array
+ */
 function normalize_item(array $row): array
 {
     $pVal = strtolower((string) $row['priority']);
@@ -33,6 +53,13 @@ function normalize_item(array $row): array
     ];
 }
 
+/**
+ * Normalizes database fields of a user row into a consistent array format.
+ *
+ * @param array $row Database row from queueing_users
+ * @param string $status Custom status ('online' / 'offline')
+ * @return array Normalized user array
+ */
 function normalize_user(array $row, string $status = 'offline'): array
 {
     return [
@@ -46,6 +73,13 @@ function normalize_user(array $row, string $status = 'offline'): array
     ];
 }
 
+/**
+ * Computes the priority score of a queue item based on its priority weight and queue time.
+ * Calculates aging (waiting duration * aging rate) and adds it to the priority base weight.
+ *
+ * @param array $item Normalized queue item
+ * @return float Computed priority score
+ */
 function priority_score(array $item): float
 {
     global $config;
@@ -64,6 +98,12 @@ function priority_score(array $item): float
     return $base + ($minutes * $agingRate);
 }
 
+/**
+ * Normalizes a queue item and appends its effective priority score if it is pending.
+ *
+ * @param array $row Database row of queue item
+ * @return array Normalized item including effective priority score
+ */
 function item_with_score(array $row): array
 {
     $item = normalize_item($row);
@@ -73,6 +113,12 @@ function item_with_score(array $row): array
     return $item;
 }
 
+/**
+ * Returns date-time bounds (start and end) for the current day.
+ * Used for filtering queue entries created today.
+ *
+ * @return array Array containing [start_datetime, end_datetime]
+ */
 function today_bounds(): array
 {
     return [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')];

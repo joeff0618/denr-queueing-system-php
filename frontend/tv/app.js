@@ -1,3 +1,6 @@
+/**
+ * Updates the display element with the current date (DD MONTH YYYY) and time (HH:MM AM/PM) every second.
+ */
 function updateClock() {
       const now = new Date();
 
@@ -30,7 +33,12 @@ function updateClock() {
     // Tracker for items that triggers the chime
     let chimedItems = new Set();
 
-// Fetches active queue data and updates the display
+/**
+ * Updates the TV monitor dashboard displaying Now Serving and Coming Up Next information.
+ * Handles chime playing and text-to-speech announcement of newly called queue items.
+ * 
+ * @param {Array} activeItems List of active queue items fetched from the server.
+ */
 function updateDisplay(activeItems) {
   // Clear current displays
   document.getElementById('queue-body-regular-smd').innerHTML = '';

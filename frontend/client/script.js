@@ -17,7 +17,14 @@ buttons.forEach(button => {
     });
 });
 
-// Custom Kiosk Modal logic
+/**
+ * Displays a custom kiosk feedback modal window.
+ * 
+ * @param {string} title Header title of the modal
+ * @param {string} message Text message explaining status
+ * @param {boolean} isSuccess Defines the design motif (success vs error)
+ * @param {number|null} queueNo Ticket queue number to display prominently, if applicable
+ */
 function showModal(title, message, isSuccess = true, queueNo = null) {
     const modal = document.getElementById("customModal");
     const modalTitle = document.getElementById("modalTitle");
@@ -49,6 +56,9 @@ function showModal(title, message, isSuccess = true, queueNo = null) {
     modal.style.display = "flex";
 }
 
+/**
+ * Closes the currently active kiosk feedback modal window.
+ */
 function closeModal() {
     document.getElementById("customModal").style.display = "none";
 }
@@ -106,6 +116,9 @@ document.getElementById("entryForm")
     }
 });
 
+/**
+ * Resets Kiosk entry fields and button states to default values.
+ */
 function resetPage() {
     document.getElementById("nameField").value = "";
     document.getElementById("purposeField").value = "";

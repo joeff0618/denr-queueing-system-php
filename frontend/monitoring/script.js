@@ -10,6 +10,7 @@ let sortKey = "created_at";
 let sortDirection = "desc"; // "asc" or "desc"
 let userDivision = localStorage.getItem("userDiv");   // Get assigned division
 
+/** Checks if a queue item's division matches the logged-in operator's division. */
 function matchesDivision(itemDiv) {
     if (!itemDiv) return false;
     const lowerItemDiv = itemDiv.toLowerCase();
@@ -26,6 +27,7 @@ let currentEntryId = null;
 let currentQueueNumber = null;
 let knownForwardedIds = null;
 
+/** Plays a chime audio sound. */
 function playChime() {
     try {
         const audio = new Audio('../assets/sound/freesound_community-chime-sound-7143.mp3');
@@ -35,6 +37,7 @@ function playChime() {
     }
 }
 
+/** Updates the division indicator badge on the operator interface. */
 function updateDivisionBadge() {
     const divBadge = document.getElementById("divisionBadge");
     if (divBadge) {
@@ -110,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ================= DATA FETCHING ================= */
 
+/** Fetches queue items from the server and filters them by division. */
 async function loadAllData(resetPage = true) {
     try {
         const todayOnly = document.getElementById("todayOnly").checked;
@@ -144,6 +148,7 @@ async function loadAllData(resetPage = true) {
     }
 }
 
+/** Updates the dashboard panel listing items forwarded to this division. Handles chime and TTS announcements. */
 function updateMonitoringDashboard() {
     const items = allData.filter(
         item =>
@@ -269,12 +274,14 @@ function updateMonitoringDashboard() {
 
 /* ================= TODAY TOGGLE ================= */
 
+/** Refreshes queue data when the Today Only filter is toggled. */
 function onTodayToggle() {
     loadAllData();
 }
 
 /* ================= FILTERING ================= */
 
+/** Applies text search, priority, and status filters to the queue list. */
 function applyFilters(resetPage = true) {
     const search = document.getElementById("searchInput").value.toLowerCase();
     const priority = document.getElementById("priorityFilter").value;
@@ -304,6 +311,7 @@ function applyFilters(resetPage = true) {
 
 /* ================= SORTING ================= */
 
+/** Triggers sorting of the filtered queue data by a specific field key. */
 function sortBy(key) {
     if (sortKey === key) {
         // Toggle direction
@@ -317,6 +325,7 @@ function sortBy(key) {
     applySorting();
 }
 
+/** Sorts the queue data array using the active sort key and direction. */
 function applySorting(resetPage = true) {
     filteredData.sort((a, b) => {
         const statusPriority = {
@@ -365,6 +374,7 @@ function applySorting(resetPage = true) {
     renderTable();
 }
 
+/** Updates sorting direction arrows in the table headers. */
 function updateSortIcons() {
     // Clear all icons
     document.querySelectorAll(".sort-icon").forEach(icon => {
@@ -391,11 +401,13 @@ function updateSortIcons() {
 
 /* ================= SERVICE TIME COMPUTATION ================= */
 
+/** Calculates queue transaction duration in milliseconds. */
 function computeServiceTimeMs(item) {
     if (!item.completed_at || !item.created_at) return -1;
     return new Date(item.completed_at).getTime() - new Date(item.created_at).getTime();
 }
 
+/** Formats transaction time into readable minute and second string. */
 function formatServiceTime(item) {
     const ms = computeServiceTimeMs(item);
     if (ms < 0) return "—";
@@ -413,6 +425,7 @@ function formatServiceTime(item) {
 
 /* ================= DATETIME FORMATTING ================= */
 
+/** Formats ISO datetime string to a human-readable local date and time. */
 function formatDatetime(isoStr) {
     if (!isoStr) return "—";
     const d = new Date(isoStr);
@@ -421,6 +434,7 @@ function formatDatetime(isoStr) {
     return `${date}, ${time}`;
 }
 
+/** Computes and displays dashboard aggregate metrics. */
 function updateStats() {
     const countByStatus = status => allData.filter(item => item.status === status).length;
     const setText = (id, value) => {
@@ -436,6 +450,7 @@ function updateStats() {
     setText("statPriority", allData.filter(item => item.priority !== "regular").length);
 }
 
+/** Updates the last synced timestamp display. */
 function updateLastUpdated(message = null) {
     const el = document.getElementById("lastUpdated");
     if (!el) return;
@@ -453,11 +468,13 @@ function updateLastUpdated(message = null) {
     })}`;
 }
 
+/** Escapes double quotes and wraps values in quotes for CSV compliance. */
 function escapeCsvValue(value) {
     const text = String(value ?? "");
     return `"${text.replace(/"/g, '""')}"`;
 }
 
+/** Escapes HTML characters to prevent XSS. */
 function escapeHtml(value) {
     return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -469,6 +486,7 @@ function escapeHtml(value) {
 
 /* ================= RENDERING ================= */
 
+/** Renders rows for the paginated queue history table. */
 function renderTable() {
     const body = document.getElementById("queueBody");
     // We'll update rows incrementally to avoid replacing the DOM node of the selected row (prevents blinking)
@@ -558,6 +576,7 @@ function renderTable() {
     updateSortIcons();
 }
 
+/** Renders an error message in the table row area on fetch failures. */
 function renderLoadError(message) {
     const body = document.getElementById("queueBody");
     body.innerHTML = `
@@ -574,6 +593,7 @@ function renderLoadError(message) {
 
 /* ================= PAGINATION ================= */
 
+/** Shifts the queue history current page. */
 function changePage(delta) {
     const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
     const newPage = currentPage + delta;
@@ -584,6 +604,7 @@ function changePage(delta) {
     }
 }
 
+/** Updates rows per page limit and resets pagination. */
 function changeRowsPerPage() {
     rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
     currentPage = 1;
@@ -592,6 +613,7 @@ function changeRowsPerPage() {
 
 /* ================= CSV DOWNLOAD MODAL ================= */
 
+/** Displays the CSV download parameter modal. */
 function openDownloadModal() {
     document.getElementById("csvTodayOnly").checked = false;
     document.getElementById("csvDateRange").classList.remove("hidden");
@@ -600,6 +622,7 @@ function openDownloadModal() {
     document.getElementById("downloadModal").style.display = "flex";
 }
 
+/** Toggles the date-picker range fields depending on today-only status. */
 function toggleCsvDateRange() {
     const todayChecked = document.getElementById("csvTodayOnly").checked;
     const dateRange = document.getElementById("csvDateRange");
@@ -611,6 +634,7 @@ function toggleCsvDateRange() {
     }
 }
 
+/** Fetches filtered queue logs and triggers client-side CSV download. */
 async function downloadCsv() {
     const todayOnly = document.getElementById("csvTodayOnly").checked;
     let url;
@@ -659,9 +683,9 @@ async function downloadCsv() {
             item.id,
             item.queue_no,
             item.client_name,
-            item.purpose,
-            item.division.toUpperCase(),
-            item.status.toUpperCase(),
+            item.division ? item.division.toUpperCase() : "",
+            item.purpose || "",
+            item.status ? item.status.toUpperCase() : "",
             item.priority !== "regular" ? escapeHtml(item.priority.toUpperCase()) : "Regular",
             formatServiceTime(item),
             item.created_at ? formatDatetime(item.created_at) : "",
@@ -695,11 +719,13 @@ async function downloadCsv() {
 }
 
 /* ================= VIEW STATISTICS ================= */
+/** Opens the statistics analytics window. */
 function openStatisticsModal() {
     loadStatistics("today");
     document.getElementById("statsModal").classList.remove("hidden");    
 }
 
+/** Closes the statistics analytics window. */
 function closeStatisticsModal() {
     document.getElementById("statsModal").classList.add("hidden");    
 }
@@ -708,6 +734,7 @@ function closeStatisticsModal() {
 let statsChart = null;
 
 // Load statistics based on selected range
+/** Retrieves aggregated transaction counts for statistics panels. */
 async function loadStatistics(period = "today") {
   try {
     const url = `${API_BASE}/statistics/completed?range=${period}&div=${userDivision}`;    
@@ -721,6 +748,7 @@ async function loadStatistics(period = "today") {
   }
 }
 
+/** Builds dynamic SVG bar charts displaying daily or monthly processing history. */
 function renderChart(data) {
     const tooltip = document.getElementById("chartTooltip");
     const chart = document.getElementById("statsChart");
@@ -822,6 +850,7 @@ function renderChart(data) {
     });
 }
 
+/** Renders statistics data table summarizing completed, deferred, and pending tickets. */
 function renderStatsTable(data) {
     const tbody = document.getElementById("statsTableBody");
     const completed = data.reduce( (total, item) => total + item.completed, 0 );
@@ -843,6 +872,7 @@ function renderStatsTable(data) {
     `;
 }
 
+/** Formats chart labels depending on the selected range (today, 7days, etc.). */
 function formatLabel(dateStr, range) {
     if (range === "today" || range === "yesterday") {
         return dateStr;
@@ -879,10 +909,12 @@ filterButtons.forEach(btn => {
 });
 
 /* ================= LOGOUT MODAL ================= */
+/** Opens the logout confirmation popup. */
 function openLogoutModal(){
     document.getElementById("logoutModal").style.display = "flex";
 }
 
+/** Performs logout API request, deletes session data, and redirects to login. */
 async function logout(){
     try {
         const response = await fetch(`../api/auth/logout`, {
@@ -906,6 +938,7 @@ async function logout(){
 
 /* ================= BUTTONS ================= */
 
+/** Sends status update call for the currently highlighted queue item. */
 async function updateCurrent(newStatus) {
     let status = newStatus;
     try {
@@ -931,6 +964,7 @@ async function updateCurrent(newStatus) {
 }
 
 /* ================= UTILITIES ================= */
+/** Closes the designated popup window. */
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = "none";
     if (modalId === 'forwardedAnnouncementModal') {
@@ -938,12 +972,14 @@ function closeModal(modalId) {
     }
 }
 
+/** Toggles the clear button visibility for an input element depending on text entry. */
 function toggleClearButton(input) {
     const clearBtn = input.parentElement.querySelector(".clear-btn");
     if (!clearBtn) return;
     clearBtn.classList.toggle("visible", input.value.trim());
 }
 
+/** Wipes clean the text input or select field. */
 function clearField(fieldId) {
     const field = document.getElementById(fieldId);
     if (field.tagName === "SELECT") {
@@ -956,6 +992,7 @@ function clearField(fieldId) {
 }
 
 /* Entry Validation */
+/** Asserts inputs for edit/creation forms are not blank. */
 function validateForm(clientFieldId, purposeFieldId) {
     const clientField = document.getElementById(clientFieldId);
     const purposeField = document.getElementById(purposeFieldId);
@@ -989,6 +1026,7 @@ function validateForm(clientFieldId, purposeFieldId) {
 
 /* ================= ROW SELECTION ================= */
 
+/** Sets the selected row element status active and updates control button states. */
 function selectRow(id, rowElement){
     // Clear previous selection visual
     document.querySelectorAll(".table-shell tbody tr").forEach(r => r.classList.remove("selected"));
@@ -1028,6 +1066,7 @@ function selectRow(id, rowElement){
 /* ================= EDIT ENTRY ================= */
 let priorityType = null;
 
+/** Opens the update detail dialog populated with the active row's data. */
 async function openEditEntryModal() {
     try {
         const response = await fetch(`${API_BASE}/today`);
@@ -1108,6 +1147,7 @@ document.querySelectorAll(".status-btn").forEach(btn => {
 let clientName = null;
 let purpose = null;
 
+/** Opens the transfer destination selector populated with the active row's data. */
 async function openTransferEntryModal() {
     try {
         const response = await fetch(`${API_BASE}/today`);
@@ -1160,6 +1200,7 @@ document.getElementById("transferEntryModal").addEventListener("submit", async f
 let pollingInterval = null;
 let lastHeartbeat = 0;
 
+/** Starts the automatic data sync interval process. */
 function startPolling() {
     if (pollingInterval) {
         return;

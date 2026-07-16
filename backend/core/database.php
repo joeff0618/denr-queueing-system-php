@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Establishes and returns a singleton database connection using PDO.
+ * Reads database credentials from the global configuration and caches the PDO instance for subsequent calls.
+ * 
+ * @return PDO Active database connection.
+ */
 function db(): PDO
 {
     static $pdo = null;

@@ -42,6 +42,7 @@ let userDivision = localStorage.getItem("userDiv");
 
 /* ================= PAGE SWITCH ================= */
 
+/** Switches the active sub-page in the operator panel dashboard view. */
 function showPage(id) {
     if (id === "userPage" && (!userDivision || userDivision.toLowerCase() !== "sadmin")) {
         alert("Access Denied: Administrative privileges required.");
@@ -67,6 +68,7 @@ loadQueue();
 loadStatistics("today");
 
 /* ================= VALIDATE ENTRY ==============*/
+/** Asserts form client and purpose inputs are filled correctly. */
 function validateForm(clientFieldId, purposeFieldId) {
     const clientField = document.getElementById(clientFieldId);
     const purposeField = document.getElementById(purposeFieldId);
@@ -102,6 +104,7 @@ function validateForm(clientFieldId, purposeFieldId) {
 let modalMode = "add";
 
 /* OPEN ADD */
+/** Opens the creation modal for adding a new queue item. */
 function add() {
     modalMode = "add";
 
@@ -117,6 +120,7 @@ function add() {
 }
 
 /* OPEN EDIT */
+/** Populates and displays the edit details modal for the selected item. */
 async function openSelectedEdit() {
     try {
         const response = await fetch(`${API_BASE}/today`);
@@ -232,6 +236,7 @@ document.getElementById("entryForm")
 });
 
 // Custom Creation Modal logic for Operator
+/** Opens the operator confirmation overlay dialog for queue creations. */
 function showCustomKioskModal(title, message, isSuccess = true, queueNo = null) {
     const modal = document.getElementById("customModal");
     const modalTitle = document.getElementById("modalTitle");
@@ -271,6 +276,7 @@ document.getElementById("modalCloseBtn").addEventListener("click", () => {
 const prioritySelect = document.getElementById("priority");
 const priorityOptions = document.getElementById("priorityOptions");
 
+/** Toggles the priority description drop-down options area. */
 function togglePriorityOptions() {
     priorityOptions.style.display = prioritySelect.value === "true" ? "block" : "none";
 }
@@ -287,6 +293,7 @@ buttons.forEach(button => {
     });
 });
 
+/** Sets operator control button state options. */
 function setPanelButtonState(buttonId, enabled) {
     const btn = document.getElementById(buttonId);
     if (!btn) return;
@@ -299,6 +306,7 @@ function setPanelButtonState(buttonId, enabled) {
     btn.style.cursor = enabled ? "pointer" : "not-allowed";
 }
 
+/** Enables or disables panel action controls based on the selected item's status. */
 function togglePanelButtons(status = null) {
     const ids = [
         "skipBtn",
@@ -344,6 +352,7 @@ function togglePanelButtons(status = null) {
     }
 }
 
+/** Syncs the action buttons panel according to the highlighted row's status. */
 function syncPanelButtonsForSelection() {
     if (!selectedEntryId) {
         togglePanelButtons();
@@ -356,22 +365,26 @@ function syncPanelButtonsForSelection() {
 
 
 /* UTILITIES (MODALS) */
+/** Opens the specified dialog overlay. */
 function openModal(modalId) {
     document.getElementById(modalId).style.display = "flex";
     if(modalId === "statsModal") resetStatisticsFilters();
 }
 
+/** Closes the specified dialog overlay. */
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = "none";
     if(modalId === "statsModal") resetStatisticsFilters();
 }
 
+/** Toggles clear button visibility on the input parent element. */
 function toggleClearButton(input) {
     const clearBtn = input.parentElement.querySelector(".clear-btn");
     if (!clearBtn) return;
     clearBtn.classList.toggle("visible", input.value.trim());
 }
 
+/** Clears form inputs and reset selects to default. */
 function clearField(fieldId) {
     const field = document.getElementById(fieldId);
     if (field.tagName === "SELECT") {
@@ -384,6 +397,7 @@ function clearField(fieldId) {
 }
 
 /* ================= ANNOUNCEMENT ================= */
+/** Submits the text string announcement parameter to the API. */
 async function saveAnnouncement() {
     const text = document.getElementById("messageText").value;
     try {
@@ -411,6 +425,7 @@ async function saveAnnouncement() {
 let statsChart = null;
 
 // Load statistics based on selected range
+/** Calls the completed ticket statistics endpoint based on active range filters. */
 async function loadStatistics(period = "today") {
     try {
         const url = `${API_BASE}/statistics/completed?range=${period}&div=${userDivision}`;
@@ -424,18 +439,7 @@ async function loadStatistics(period = "today") {
     }
 }
 
-function resetStatisticsFilters() {
-    currentRange = "today";
-    filterButtons.forEach(btn => {
-        btn.classList.remove("active");
-        if (btn.dataset.range === "today") {
-            btn.classList.add("active");
-        }
-    });
-
-    loadStatistics(currentRange);
-}
-
+/** Renders statistics data bars for performance charts. */
 function renderChart(data) {
     const tooltip = document.getElementById("chartTooltip");
     const chart = document.getElementById("statsChart");
@@ -536,6 +540,7 @@ function renderChart(data) {
     });
 }
 
+/** Renders the overview grid summary for statistics results. */
 function renderStatsTable(data) {
     const tbody = document.getElementById("statsTableBody");
     const completed = data.reduce( (total, item) => total + item.completed, 0 );
@@ -557,6 +562,7 @@ function renderStatsTable(data) {
     `;
 }
 
+/** Formats statistical label texts. */
 function formatLabel(dateStr, range) {
     if (range === "today" || range === "yesterday") {
         return dateStr;
@@ -594,6 +600,7 @@ filterButtons.forEach(btn => {
 
 /* ================= LOAD QUEUE ================= */
 
+/** Fetches the latest queue status data list from the server. */
 async function loadQueue(){
     try {
         const response = await fetch(`${API_BASE}/today`);
@@ -621,6 +628,7 @@ async function loadQueue(){
 }
 
 /* TABLE FILTERS */
+/** Redirects filters to User list or Queue list depending on active page view. */
 function filterTable(){
     const userPageEl = document.getElementById("userPage");
     if (userPageEl && userPageEl.classList.contains("active")) {
@@ -630,6 +638,7 @@ function filterTable(){
     }
 }
 
+/** Filters the queue table based on search, division, priority, status and dates. */
 function applyQueueFilters() {
     const search = document.getElementById("searchInput").value.toLowerCase();
     
@@ -692,12 +701,14 @@ function applyQueueFilters() {
     renderQueueTable();
 }
 
+/** Applies active filters from the filters modal dialog. */
 function applyFilterModal() {
     applyQueueFilters();
     closeModal('filterModal');
     updateFilterButtonActiveState();
 }
 
+/** Resets all active table filters to default. */
 function clearFilters() {
     if (document.getElementById("filterDivision")) document.getElementById("filterDivision").value = "";
     if (document.getElementById("filterPriority")) document.getElementById("filterPriority").value = "";
@@ -710,6 +721,7 @@ function clearFilters() {
     closeModal('filterModal');
 }
 
+/** Updates the visual state of the filter button indicator badge. */
 function updateFilterButtonActiveState() {
     const btn = document.getElementById("openFilterBtn");
     if (!btn) return;
@@ -731,6 +743,7 @@ function updateFilterButtonActiveState() {
     }
 }
 
+/** Directs table sorting actions based on target key. */
 function sortQueueBy(key) {
     const userPageEl = document.getElementById("userPage");
     if (userPageEl && userPageEl.classList.contains("active")) {
@@ -748,6 +761,7 @@ function sortQueueBy(key) {
     }
 }
 
+/** Sorts the queue items array based on operatorSortKey and direction. */
 function sortFilteredQueue() {
     filteredQueueData.sort((a, b) => {
         const aProcessing = a.status === "processing";
@@ -783,10 +797,12 @@ function sortFilteredQueue() {
     });
 }
 
+/** Toggles visibility of completed tickets. */
 function hideCompletedToggle() {
     applyQueueFilters();
 }
 
+/** Custom sorting helper logic for queue items. */
 function compareQueueOrder(a, b) {
     const aDone = ["completed", "deferred"].includes(a.status);
     const bDone = ["completed", "deferred"].includes(b.status);
@@ -805,6 +821,7 @@ function compareQueueOrder(a, b) {
     return aTime - bTime;
 }
 
+/** Populates the main queue HTML table with filtered results. */
 function renderQueueTable() {
     const body = document.getElementById("queueBody");
     body.innerHTML = "";
@@ -854,6 +871,7 @@ function renderQueueTable() {
     updateOperatorSortIcons();
 }
 
+/** Displays error details inside the queue table view. */
 function renderQueueError(message) {
     document.getElementById("queueBody").innerHTML = `
         <tr>
@@ -862,6 +880,7 @@ function renderQueueError(message) {
     `;
 }
 
+/** Refreshes sorting arrow icons in the table header. */
 function updateOperatorSortIcons() {
     document.querySelectorAll(".sort-icon").forEach(icon => {
         icon.className = "sort-icon";
@@ -880,6 +899,7 @@ function updateOperatorSortIcons() {
     if (activeHeader) activeHeader.classList.add(`active-${operatorSortDirection}`);
 }
 
+/** Refreshes dashboard metrics representing queue count and current ticket number. */
 function updateOperatorDashboard() {
     const processingItems = allQueueData.filter(item => item.status.toLowerCase() === "processing");
     
@@ -953,6 +973,7 @@ function updateOperatorDashboard() {
         item.status !== "completed" && item.status !== "deferred").length);
 }
 
+/** Refreshes operator dashboard sync status message. */
 function updateOperatorLastUpdated(message = null) {
     const el = document.getElementById("operatorLastUpdated");
     if (!el) return;
@@ -970,6 +991,7 @@ function updateOperatorLastUpdated(message = null) {
     })}`;
 }
 
+/** Formats difference duration into readable form. */
 function formatOperatorTime(item) {
     if (item.status.toLowerCase() === "completed" || 
         item.status.toLowerCase() === "deferred" && item.completed_at) {
@@ -984,6 +1006,7 @@ function formatOperatorTime(item) {
     return new Date(item.created_at).toLocaleString();
 }
 
+/** Escapes text entities to prevent XSS issues. */
 function escapeHtml(value) {
     return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -995,6 +1018,7 @@ function escapeHtml(value) {
 
 /* ================= UPDATE ENTRY ================= */
 
+/** Opens update status code modal for queue items. */
 async function updateEntry(id){
     document.getElementById("editNo").value = id;
     document.getElementById("updateModal").style.display = "flex";
@@ -1008,6 +1032,7 @@ document.querySelectorAll(".status-btn").forEach(btn => {
     });
 });
 
+/** Submits updated status selection back to the database. */
 async function saveStatusUpdate(){
     const id = parseInt(document.getElementById("editNo").value);
     const newStatus = document.getElementById("updateStatus").value;
@@ -1036,6 +1061,7 @@ async function saveStatusUpdate(){
 
 /* ================= ROW SELECTION ================= */
 
+/** Sets visual selection highlight for the clicked queue row. */
 function selectRow(id, rowElement){
     document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
     rowElement.classList.add("selected");
@@ -1047,6 +1073,7 @@ function selectRow(id, rowElement){
     if (flashBtn) flashBtn.textContent = "Flash";
 }
 
+/** Clears visual selection and action states from table queue rows. */
 function clearSelection(){
     selectedEntryId = null;
     togglePanelButtons();
@@ -1058,6 +1085,7 @@ function clearSelection(){
     setPanelButtonState("flashBtn", true);
 }
 
+/** Dispatches flash action or next call based on selection state. */
 async function handleFlashAction() {
     if (selectedEntryId) {
         await flashSelected();
@@ -1066,6 +1094,7 @@ async function handleFlashAction() {
     }
 }
 
+/** Calls the next pending queue item by updating its status to processing. */
 async function callNext() {
     try {
         const response = await fetch(`${API_BASE}/call-next`, {
@@ -1084,6 +1113,7 @@ async function callNext() {
     }
 }
 
+/** Flashes the currently selected queue item by setting its status to processing. */
 async function flashSelected() {
     try {
         const todayRes = await fetch(`${API_BASE}/today`);
@@ -1117,6 +1147,7 @@ document.addEventListener("click", function(e){
     }
 });
 
+/** Opens the confirmation modal for deleting the selected queue item. */
 async function deleteSelected(){
     try {
         const response = await fetch(`${API_BASE}/today`);
@@ -1131,6 +1162,7 @@ async function deleteSelected(){
     }
 }
 
+/** Deletes the selected queue item from the database. */
 async function deleteEntry(){
     const deletedId = selectedEntryId;
     try {
@@ -1153,6 +1185,7 @@ async function deleteEntry(){
     }
 }
 
+/** Cleans session info and routes user back to the login page. */
 async function logout(){
     try {
         const response = await fetch(`../api/auth/logout`, {
@@ -1182,6 +1215,7 @@ toggleBtn.addEventListener("click", () => {
     sidebar.classList.toggle("collapsed");
 });
 
+/** Returns the selected ticket back to pending status. */
 async function skip(status) {
     try {
         const todayRes = await fetch(`${API_BASE}/today`);
@@ -1212,6 +1246,7 @@ async function skip(status) {
     }
 }
 
+/** Sets the status of the selected ticket to the given status parameter. */
 async function updateCurrent(status) {
     try {
         const todayRes = await fetch(`${API_BASE}/today`);
@@ -1247,6 +1282,7 @@ async function updateCurrent(status) {
 
 /* ================= USER LIST LOGIC ================= */
 
+/** Locates and returns HTML user table control elements. */
 function getUserPageElements() {
     const root = document.getElementById("userPage");
     if (!root) return {};
@@ -1262,6 +1298,7 @@ function getUserPageElements() {
     };
 }
 
+/** Fetches all user profiles from the API server database. */
 async function loadUsers(resetPage = true) {
     try {
         const response = await fetch("../api/auth/users");
@@ -1285,6 +1322,7 @@ async function loadUsers(resetPage = true) {
     }
 }
 
+/** Updates counters representing active total and online user profiles. */
 function updateUserDashboard() {
     const els = getUserPageElements();
     const onlineUserCount = allUserData.filter(user => user.status === "online").length;
@@ -1294,6 +1332,7 @@ function updateUserDashboard() {
     }
 }
 
+/** Updates last synced timestamp on the users administration view. */
 function updateUserLastUpdated(message = null) {
     const els = getUserPageElements();
     if (!els.lastUpdated) return;
@@ -1311,10 +1350,12 @@ function updateUserLastUpdated(message = null) {
     })}`;
 }
 
+/** Triggers user profile search filters reset. */
 function filterUsersTable() {
     applyUserFilters(true);
 }
 
+/** Filters user profile results using search fields. */
 function applyUserFilters(resetPage = true) {
     const els = getUserPageElements();
     if (!els.searchInput || !els.divFilter) return;
@@ -1338,6 +1379,7 @@ function applyUserFilters(resetPage = true) {
     renderUsersTable();
 }
 
+/** Activates user profiles sorting flags based on selected header key. */
 function sortUsersBy(key) {
     if (userSortKey === key) {
         userSortDirection = userSortDirection === "asc" ? "desc" : "asc";
@@ -1351,6 +1393,7 @@ function sortUsersBy(key) {
     renderUsersTable();
 }
 
+/** Sorts the active users collection array. */
 function sortFilteredUsers() {
     filteredUserData.sort((a, b) => {
         let valA = a[userSortKey];
@@ -1373,6 +1416,7 @@ function sortFilteredUsers() {
     });
 }
 
+/** Populates rows in the administration user list table. */
 function renderUsersTable() {
     const els = getUserPageElements();
     if (!els.tableBody) return;
@@ -1445,6 +1489,7 @@ function renderUsersTable() {
     updateUserSortIcons();
 }
 
+/** Renders fetch errors inside the users display table. */
 function renderUsersError(message) {
     const els = getUserPageElements();
     if (els.tableBody) {
@@ -1470,6 +1515,7 @@ function renderUsersError(message) {
     if (deleteBtn) deleteBtn.disabled = true;
 }
 
+/** Updates active sort flags on the admin users list headers. */
 function updateUserSortIcons() {
     const els = getUserPageElements();
     if (!els.table) return;
@@ -1491,6 +1537,7 @@ function updateUserSortIcons() {
 
 /* ================= USER PAGINATION ================= */
 
+/** Increments/decrements page navigation indices in the user panel. */
 function changeUserPage(delta) {
     const totalPages = Math.max(1, Math.ceil(filteredUserData.length / userRowsPerPage));
     const newPage = userCurrentPage + delta;
@@ -1501,6 +1548,7 @@ function changeUserPage(delta) {
     }
 }
 
+/** Resets row limits for paginated user lists. */
 function changeUserRowsPerPage() {
     const selectEl = document.getElementById("userRowsPerPage");
     if (selectEl) {
@@ -1512,6 +1560,7 @@ function changeUserRowsPerPage() {
 
 /* ================= USER SELECTION & MODAL ACTIONS ================= */
 
+/** Selects a user row and highlights it in the admin UI view. */
 function selectUserRow(id, rowElement) {
     const tableBody = document.getElementById("userListBody");
     if (tableBody) {
@@ -1526,6 +1575,7 @@ function selectUserRow(id, rowElement) {
     if (deleteBtn) deleteBtn.disabled = false;
 }
 
+/** Deselects the highlighted user profile row. */
 function clearUserSelection() {
     selectedUserId = null;
     const editBtn = document.getElementById("editUserBtn");
@@ -1539,6 +1589,7 @@ function clearUserSelection() {
     }
 }
 
+/** Sends a registration request to add a new operator user. */
 async function registerNewUser(event) {
     event.preventDefault();
 
@@ -1577,6 +1628,7 @@ async function registerNewUser(event) {
     }
 }
 
+/** Opens the modal form to modify selected user profile details. */
 function openUserEditModal() {
     if (selectedUserId === null) return;
     const user = allUserData.find(u => u.id === selectedUserId);
@@ -1590,6 +1642,7 @@ function openUserEditModal() {
     document.getElementById("userEditModal").style.display = "flex";
 }
 
+/** Sends updated user info details to the server database. */
 async function editExistingUser(event) {
     event.preventDefault();
     const id = document.getElementById("editUserId").value;
@@ -1631,6 +1684,7 @@ async function editExistingUser(event) {
     }
 }
 
+/** Opens confirm user deletion dialog. */
 function openUserDeleteModal() {
     if (selectedUserId === null) return;
     const user = allUserData.find(u => u.id === selectedUserId);
@@ -1641,6 +1695,7 @@ function openUserDeleteModal() {
     document.getElementById("userDeleteModal").style.display = "flex";
 }
 
+/** Requests deletion of selected user account from the server. */
 async function deleteSelectedUser() {
     const id = document.getElementById("deleteUserId").value;
 
@@ -1665,6 +1720,7 @@ async function deleteSelectedUser() {
     }
 }
 
+/** Removes DOM elements that the operator does not have access to based on their division. */
 function applyDepartmentAccess() {                                                                                                      
     const userDiv = userDivision; // e.g., "admin", "lobby", "cashier"
     if (!userDiv) return;
@@ -1681,6 +1737,7 @@ function applyDepartmentAccess() {
 }
 /* ================= CSV DOWNLOAD ================= */
 
+/** Opens the CSV reports filter window. */
 function openDownloadModal() {
     document.getElementById("csvTodayOnly").checked = false;
     document.getElementById("csvDateRange").classList.remove("hidden");
@@ -1689,6 +1746,7 @@ function openDownloadModal() {
     document.getElementById("downloadModal").style.display = "flex";
 }
 
+/** Toggle CSV timeframe select options. */
 function toggleCsvDateRange() {
     const todayChecked = document.getElementById("csvTodayOnly").checked;
     const dateRange = document.getElementById("csvDateRange");
@@ -1700,16 +1758,19 @@ function toggleCsvDateRange() {
     }
 }
 
+/** Wraps value fields in quotes for secure CSV construction. */
 function escapeCsvValue(value) {
     const text = String(value ?? "");
     return `"${text.replace(/"/g, '""')}"`;
 }
 
+/** Measures milliseconds delta between transaction times. */
 function computeServiceTimeMs(item) {
     if (!item.completed_at || !item.created_at) return -1;
     return new Date(item.completed_at).getTime() - new Date(item.created_at).getTime();
 }
 
+/** Translates transaction time to string representation. */
 function formatServiceTime(item) {
     const ms = computeServiceTimeMs(item);
     if (ms < 0) return "—";
@@ -1725,6 +1786,7 @@ function formatServiceTime(item) {
     return `${mins}m ${secs}s`;
 }
 
+/** Formats ISO time values to local timezone layouts. */
 function formatDatetime(isoStr) {
     if (!isoStr) return "—";
     const d = new Date(isoStr);
@@ -1733,6 +1795,7 @@ function formatDatetime(isoStr) {
     return `${date}, ${time}`;
 }
 
+/** Triggers CSV transaction history downloads. */
 async function downloadCsv() {
     const todayOnly = document.getElementById("csvTodayOnly").checked;
     let url;
@@ -1781,9 +1844,9 @@ async function downloadCsv() {
             item.id,
             item.queue_no,
             item.client_name,
-            item.purpose,
-            item.division.toUpperCase(),
-            item.status.toUpperCase(),
+            item.division ? item.division.toUpperCase() : "",
+            item.purpose || "",
+            item.status ? item.status.toUpperCase() : "",
             item.priority !== "regular" ? escapeHtml(item.priority.toUpperCase()) : "Regular",
             formatServiceTime(item),
             item.created_at ? formatDatetime(item.created_at) : "",
@@ -1821,6 +1884,7 @@ async function downloadCsv() {
 let pollingInterval = null;
 let lastHeartbeat = 0;
 
+/** Starts background sync polling interval processes. */
 function startPolling() {
     if (pollingInterval) {
         return; // Prevent duplicate intervals
