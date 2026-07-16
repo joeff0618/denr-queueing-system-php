@@ -1,0 +1,25 @@
+-- 1. Create divisions table
+CREATE TABLE IF NOT EXISTS queueing_divisions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    display_name VARCHAR(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2. Alter existing columns in queueing_queue_items and queueing_users to support longer division names
+ALTER TABLE queueing_queue_items MODIFY COLUMN division VARCHAR(50);
+ALTER TABLE queueing_users MODIFY COLUMN division VARCHAR(50);
+
+-- 3. Seed initial divisions
+INSERT INTO queueing_divisions (name, display_name) VALUES
+('smd', 'SMD'),
+('r-smd', 'Regular SMD'),
+('sr-smd', 'Senior/PWD SMD'),
+('lpdd', 'LPDD'),
+('a0504', 'A0504'),
+('lobby', 'Lobby'),
+('legal', 'Legal'),
+('admin', 'Admin'),
+('pmd', 'PMD'),
+('rscig', 'RSCIG'),
+('sadmin', 'Super Admin')
+ON DUPLICATE KEY UPDATE display_name = VALUES(display_name);
