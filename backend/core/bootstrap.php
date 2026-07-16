@@ -30,7 +30,6 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 // Load enums
-require_once __DIR__ . '/enums/Division.php';
 require_once __DIR__ . '/enums/PriorityType.php';
 require_once __DIR__ . '/enums/Status.php';
 

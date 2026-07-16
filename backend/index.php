@@ -27,6 +27,11 @@ try {
         exit;
     }
 
+    if ($module === 'divisions') {
+        require_once __DIR__ . '/routes/divisions.php';
+        exit;
+    }
+
     fail(404, 'Endpoint not found');
 } catch (Throwable $e) {
     fail(500, $e->getMessage());

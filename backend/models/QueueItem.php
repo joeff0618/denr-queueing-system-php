@@ -160,8 +160,8 @@ function queue_statistics(PDO $pdo, string $range, string $div): array
         $where[] = "(CASE WHEN LOWER(status) = '$pending' THEN created_at ELSE completed_at END) < ?";
         $params[] = $end->format('Y-m-d H:i:s');
     }
-    if ($div && !in_array(strtolower($div), [Division::LOBBY->value, Division::SADMIN->value], true)) {
-        if (strtolower($div) === Division::SMD->value) {
+    if ($div && !in_array(strtolower($div), ['lobby', 'sadmin'], true)) {
+        if (strtolower($div) === 'smd') {
             $where[] = "LOWER(division) IN ('smd', 'r-smd', 'sr-smd')";
         } else {
             $where[] = 'LOWER(division) = ?';

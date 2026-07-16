@@ -1222,5 +1222,38 @@ function startPolling() {
 }
 
 window.addEventListener("load", () => {
+    loadDivisions();
     startPolling();
 });
+
+/** Fetches active divisions list and populates the transfer selection dropdown. */
+async function loadDivisions() {
+    try {
+        const response = await fetch("../api/divisions");
+        if (!response.ok) return;
+        const divisions = await response.json();
+        if (!Array.isArray(divisions)) return;
+
+        const el = document.getElementById("division");
+        if (!el) return;
+
+        const currentVal = el.value;
+        el.innerHTML = "";
+
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "Select";
+        el.appendChild(defaultOpt);
+
+        divisions.forEach(div => {
+            const opt = document.createElement("option");
+            opt.value = div.name;
+            opt.textContent = div.display_name;
+            el.appendChild(opt);
+        });
+
+        el.value = currentVal;
+    } catch (e) {
+        console.error("Error loading divisions:", e);
+    }
+}

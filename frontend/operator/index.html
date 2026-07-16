@@ -53,6 +53,11 @@
             <img src="../assets/svg/user-list-bold-svgrepo-com.svg" alt="User List Icon" class="sidebar-icon">
             <span>User List</span>
         </button>
+
+        <button onclick="showPage('divisionPage')" data-allowed-div="sadmin">
+            <img src="../assets/svg/checklist-minimalistic-svgrepo-com.svg" alt="Division List Icon" class="sidebar-icon">
+            <span>Division List</span>
+        </button>
         
         <button onclick="openModal('statsModal')">
             <img src="../assets/svg/stats-icon.svg" alt="Statistics Icon" class="sidebar-icon">
@@ -260,6 +265,68 @@
                     <option value="100">100 rows</option>
                 </select>
                 <span class="total-count" id="userTotalCount">0 users</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== DIVISION PAGE ===================== -->
+    <div id="divisionPage" class="page">
+        <div class="dashboard-grid" aria-label="Operator division summary">
+            <div class="dashboard-card active-card">
+                <span>Last Updated</span>
+                <div class="time-card">
+                    <span class="sync-dot"></span>
+                    <span class="time-updated" id="divisionLastUpdated">Loading...</span>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <span>Total Divisions</span>
+                <strong id="dashTotalDivisions">0</strong>
+            </div>
+        </div>
+
+        <!-- TABLE FILTERS -->
+        <div class="controls">
+            <div class="search-field">
+                <span aria-hidden="true"></span>
+                <input type="text" id="divisionSearchInput" placeholder="Search division name or display name..."
+                    onkeyup="filterDivisionsTable()">
+            </div>
+        </div>
+
+        <div class="table-shell user">
+            <table id="divisionTable">
+                <thead>
+                    <tr>
+                        <th style="width: 10%">No.</th>
+                        <th class="sortable" style="width: 40%" data-key="name" onclick="sortDivisionsBy('name')">Division Code 
+                            <span class="sort-icon" id="sort-icon-division-name"></span></th>
+                        <th class="sortable" style="width: 50%" data-key="display_name" onclick="sortDivisionsBy('display_name')">Display Name 
+                            <span class="sort-icon" id="sort-icon-division-display_name"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="divisionListBody"></tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination" id="divisionPagination">
+            <div class="user-action-buttons">
+                <button id="addDivisionBtn" onclick="openModal('divisionAddModal')">Add Division</button>
+                <button id="editDivisionBtn" onclick="openDivisionEditModal()" disabled>Edit</button>
+                <button id="deleteDivisionBtn" onclick="openDivisionDeleteModal()" disabled>Delete</button>
+            </div>
+            <div class="pagination-right">
+                <button id="divisionPrevPageBtn" onclick="changeDivisionPage(-1)">‹ Prev</button>
+                <span id="divisionPageInfo">Page 1 of 1</span>
+                <button id="divisionNextPageBtn" onclick="changeDivisionPage(1)">Next ›</button>
+                <select id="divisionRowsPerPage" onchange="changeDivisionRowsPerPage()">
+                    <option value="6" selected>6 rows</option>
+                    <option value="15">15 rows</option>
+                    <option value="25">25 rows</option>
+                    <option value="50">50 rows</option>
+                </select>
+                <span class="total-count" id="divisionTotalCount">0 divisions</span>
             </div>
         </div>
     </div>
@@ -695,6 +762,75 @@
         <div id="modalQueueNoContainer" class="modal-queue-box" style="display: none;"></div>
         <p id="modalMessage">Your ticket has been generated.</p>
         <button type="button" class="modal-close-btn" id="modalCloseBtn">OK</button>
+    </div>
+</div>
+
+<!-- ADD DIVISION MODAL -->
+<div id="divisionAddModal" class="modal">
+    <div class="modal-content">
+        <h2>Add Division</h2>
+        <form id="divisionAddForm" onsubmit="registerNewDivision(event)">
+            <div class="form-group">
+                <label>Division Code (Short Name)<span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="divCode" required maxlength="50" placeholder="e.g. smd, lpdd" oninput="toggleClearButton(this)">
+                    <button type="button" class="clear-btn" onclick="clearField('divCode')">✕</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Display Name<span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="divDisplayName" required maxlength="100" placeholder="e.g. Surveys and Mapping Division" oninput="toggleClearButton(this)">
+                    <button type="button" class="clear-btn" onclick="clearField('divDisplayName')">✕</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="save-btn">Save</button>
+                <button type="button" class="close-btn-style" onclick="closeModal('divisionAddModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT DIVISION MODAL -->
+<div id="divisionEditModal" class="modal">
+    <div class="modal-content">
+        <h2>Edit Division</h2>
+        <form id="divisionEditForm" onsubmit="editExistingDivision(event)">
+            <input type="hidden" id="editDivId">
+            <div class="form-group">
+                <label>Division Code (Short Name)<span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="editDivCode" required maxlength="50" oninput="toggleClearButton(this)">
+                    <button type="button" class="clear-btn" onclick="clearField('editDivCode')">✕</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Display Name<span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input id="editDivDisplayName" required maxlength="100" oninput="toggleClearButton(this)">
+                    <button type="button" class="clear-btn" onclick="clearField('editDivDisplayName')">✕</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="save-btn">Save Changes</button>
+                <button type="button" class="close-btn-style" onclick="closeModal('divisionEditModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DELETE DIVISION MODAL -->
+<div id="divisionDeleteModal" class="modal">
+    <div class="modal-content delete-modal-content">
+        <h2>Confirm Deletion</h2>
+        <input type="hidden" id="deleteDivId">
+        <p>Are you sure you want to delete the division <strong id="deleteDivName"></strong>?</p>
+        <p class="warning-text">This will permanently remove this division from the selection lists.</p>
+        <div class="modal-buttons">
+            <button class="delete-btn" onclick="deleteSelectedDivision()">Delete</button>
+            <button class="close-btn-style" onclick="closeModal('divisionDeleteModal')">Cancel</button>
+        </div>
     </div>
 </div>
 

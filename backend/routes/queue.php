@@ -36,7 +36,7 @@ if ($method === 'POST' && $action === 'add') {
         substr(strip_tags(trim((string) ($body['client_name'] ?? ''))), 0, 40),
         substr(strip_tags(trim((string) ($body['purpose'] ?? ''))), 0, 100),
         Status::PENDING->value,
-        strtolower((string) ($body['division'] ?? Division::LOBBY->value)),
+        strtolower((string) ($body['division'] ?? 'lobby')),
         strtolower((string) ($body['priority'] ?? PriorityType::REGULAR->value)),
         date('Y-m-d H:i:s.u'),
     ]);
@@ -141,7 +141,7 @@ if ($action === 'announcement') {
 }
 
 if ($method === 'GET' && $action === 'statistics' && ($parts[2] ?? '') === 'completed') {
-    respond(queue_statistics($pdo, (string) ($_GET['range'] ?? 'today'), (string) ($_GET['div'] ?? Division::LOBBY->value)));
+    respond(queue_statistics($pdo, (string) ($_GET['range'] ?? 'today'), (string) ($_GET['div'] ?? 'lobby')));
 }
 
 fail(404, 'Queue action not found');

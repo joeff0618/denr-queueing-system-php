@@ -16,17 +16,25 @@ function normalize_status(?string $status): string
 }
 
 /**
- * Normalizes a division string to match the Division enum values.
- * Returns the matched division value, or the original lowercase string.
+ * Normalizes a division string by matching it against active divisions in the database.
+ * Returns the matched division name, or the trimmed lowercase input.
  *
  * @param string|null $division Raw division name
- * @return string Normalized division
+ * @return string Normalized division name
  */
 function normalize_division(?string $division): string
 {
-    $val = strtolower((string) $division);
-    $enum = Division::tryFrom($val);
-    return $enum ? $enum->value : $val;
+    static $validDivisions = null;
+    $val = strtolower(trim((string) $division));
+    if ($validDivisions === null) {
+        try {
+            $stmt = db()->query("SELECT name FROM queueing_divisions");
+            $validDivisions = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'name');
+        } catch (Throwable $e) {
+            $validDivisions = [];
+        }
+    }
+    return in_array($val, $validDivisions, true) ? $val : $val;
 }
 
 /**

@@ -592,6 +592,7 @@ td:nth-child(5) {
 .div-badge {
     border: 1px solid rgba(15, 23, 42, 0.08);
     color: #243447;
+    background: #f1f5f9;
 }
 
 .div-badge.smd, .div-badge.r-smd, .div-badge.sr-smd { background: #dbeafe; }

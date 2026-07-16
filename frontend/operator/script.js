@@ -44,7 +44,7 @@ let userDivision = localStorage.getItem("userDiv");
 
 /** Switches the active sub-page in the operator panel dashboard view. */
 function showPage(id) {
-    if (id === "userPage" && (!userDivision || userDivision.toLowerCase() !== "sadmin")) {
+    if ((id === "userPage" || id === "divisionPage") && (!userDivision || userDivision.toLowerCase() !== "sadmin")) {
         alert("Access Denied: Administrative privileges required.");
         return;
     }
@@ -54,8 +54,12 @@ function showPage(id) {
 
     document.getElementById(id).classList.add("active");
     clearSelection();
+    clearUserSelection();
+    clearDivisionSelection();
     if (id === "userPage") {
         loadUsers();
+    } else if (id === "divisionPage") {
+        loadDivisions();
     } else {
         loadQueue();
     }
@@ -1895,6 +1899,10 @@ function startPolling() {
             await loadQueue();
             if (userDivision && userDivision.toLowerCase() === "sadmin") {
                 await loadUsers(false);
+                const divPage = document.getElementById("divisionPage");
+                if (divPage && divPage.classList.contains("active")) {
+                    await loadDivisions(false);
+                }
             }
             
             const now = Date.now();
@@ -1909,5 +1917,419 @@ function startPolling() {
 }
 
 window.addEventListener("load", () => {
+    loadDivisions(true);
     startPolling();
 });
+
+/* ================= DIVISION MANAGEMENT LOGIC ================= */
+
+let allDivisionData = [];
+let filteredDivisionData = [];
+let divisionSortKey = "id";
+let divisionSortDirection = "asc";
+let divisionCurrentPage = 1;
+let divisionRowsPerPage = 6;
+let selectedDivisionId = null;
+
+/** Fetches division list from the API and populates UI dropdowns. */
+async function loadDivisions(resetPage = true) {
+    try {
+        const response = await fetch("../api/divisions");
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        }
+        const divisions = await response.json();
+        if (!Array.isArray(divisions)) {
+            throw new Error("Divisions API returned an unexpected response.");
+        }
+
+        allDivisionData = divisions;
+        populateDivisionDropdowns(divisions);
+        updateDivisionDashboard();
+        updateDivisionLastUpdated();
+        applyDivisionFilters(resetPage);
+    } catch (error) {
+        console.error("Error loading divisions:", error);
+        renderDivisionsError("Failed to load division list.");
+        updateDivisionLastUpdated("Unable to sync");
+    }
+}
+
+/** Dynamically populates all division dropdown menus across the admin dashboard. */
+function populateDivisionDropdowns(divisions) {
+    const dropdowns = [
+        { id: "division", defaultText: "Select" },
+        { id: "regDivision", defaultText: "Select Division" },
+        { id: "editDivision", defaultText: "Select Division" },
+        { id: "filterDivision", defaultText: "All Divisions" },
+        { id: "userDivisionFilter", defaultText: "All Divisions" }
+    ];
+
+    dropdowns.forEach(cfg => {
+        const el = document.getElementById(cfg.id);
+        if (!el) return;
+
+        const currentVal = el.value;
+        el.innerHTML = "";
+
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = cfg.defaultText;
+        el.appendChild(defaultOpt);
+
+        divisions.forEach(div => {
+            const opt = document.createElement("option");
+            opt.value = div.name;
+            opt.textContent = div.display_name;
+            el.appendChild(opt);
+        });
+
+        el.value = currentVal;
+    });
+}
+
+/** Updates division counter card. */
+function updateDivisionDashboard() {
+    const totalDivs = allDivisionData.length;
+    const totalDivsEl = document.getElementById("dashTotalDivisions");
+    if (totalDivsEl) totalDivsEl.textContent = totalDivs;
+}
+
+/** Updates last sync datetime status. */
+function updateDivisionLastUpdated(message = null) {
+    const el = document.getElementById("divisionLastUpdated");
+    if (!el) return;
+    if (message) {
+        el.textContent = message;
+        return;
+    }
+    el.textContent = new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+    });
+}
+
+/** Triggers table filter reload. */
+function filterDivisionsTable() {
+    applyDivisionFilters(true);
+}
+
+/** Filters the local divisions list based on search text input. */
+function applyDivisionFilters(resetPage = true) {
+    const searchInput = document.getElementById("divisionSearchInput");
+    if (!searchInput) return;
+    const search = searchInput.value.toLowerCase();
+
+    filteredDivisionData = allDivisionData.filter(div => {
+        const text = `${div.id} ${div.name || ''} ${div.display_name || ''}`.toLowerCase();
+        return !search || text.includes(search);
+    });
+
+    if (resetPage) {
+        divisionCurrentPage = 1;
+    }
+
+    sortFilteredDivisions();
+    renderDivisionsTable();
+}
+
+/** Sets active sorting header flags for divisions. */
+function sortDivisionsBy(key) {
+    if (divisionSortKey === key) {
+        divisionSortDirection = divisionSortDirection === "asc" ? "desc" : "asc";
+    } else {
+        divisionSortKey = key;
+        divisionSortDirection = "asc";
+    }
+    divisionCurrentPage = 1;
+    sortFilteredDivisions();
+    renderDivisionsTable();
+}
+
+/** Sorts local division array list. */
+function sortFilteredDivisions() {
+    filteredDivisionData.sort((a, b) => {
+        let valA = a[divisionSortKey];
+        let valB = b[divisionSortKey];
+
+        if (typeof valA === "string") {
+            valA = valA.toLowerCase();
+            valB = (valB || "").toLowerCase();
+        } else {
+            valA = valA ?? 0;
+            valB = valB ?? 0;
+        }
+
+        if (valA < valB) return divisionSortDirection === "asc" ? -1 : 1;
+        if (valA > valB) return divisionSortDirection === "asc" ? 1 : -1;
+        return a.id - b.id;
+    });
+}
+
+/** Renders table rows in the division list container. */
+function renderDivisionsTable() {
+    const tbody = document.getElementById("divisionListBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    const totalItems = filteredDivisionData.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / divisionRowsPerPage));
+
+    if (divisionCurrentPage > totalPages) divisionCurrentPage = totalPages;
+    if (divisionCurrentPage < 1) divisionCurrentPage = 1;
+
+    const startIdx = (divisionCurrentPage - 1) * divisionRowsPerPage;
+    const endIdx = Math.min(startIdx + divisionRowsPerPage, totalItems);
+    const pageData = filteredDivisionData.slice(startIdx, endIdx);
+
+    const pageInfo = document.getElementById("divisionPageInfo");
+    const prevPageBtn = document.getElementById("divisionPrevPageBtn");
+    const nextPageBtn = document.getElementById("divisionNextPageBtn");
+    const totalCount = document.getElementById("divisionTotalCount");
+
+    if (pageInfo) pageInfo.textContent = `Page ${divisionCurrentPage} of ${totalPages}`;
+    if (prevPageBtn) prevPageBtn.disabled = divisionCurrentPage <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = divisionCurrentPage >= totalPages;
+    if (totalCount) totalCount.textContent = `${totalItems} division${totalItems !== 1 ? 's' : ''}`;
+
+    const editBtn = document.getElementById("editDivisionBtn");
+    const deleteBtn = document.getElementById("deleteDivisionBtn");
+    const isAnySelected = selectedDivisionId !== null && pageData.some(d => d.id === selectedDivisionId);
+    if (editBtn) editBtn.disabled = !isAnySelected;
+    if (deleteBtn) deleteBtn.disabled = !isAnySelected;
+
+    if (pageData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="empty-state">No divisions found.</td>
+            </tr>
+        `;
+        updateDivisionSortIcons();
+        return;
+    }
+
+    pageData.forEach((div, index) => {
+        const isSelected = selectedDivisionId === div.id;
+        const divClass = div.name.toLowerCase().replace(/\s/g, '');
+
+        tbody.innerHTML += `
+        <tr class="${isSelected ? 'selected' : ''}" onclick="selectDivisionRow(${div.id}, this)">
+            <td>${startIdx + index + 1}</td>
+            <td><span class="div-badge ${divClass}">${escapeHtml(div.name.toUpperCase())}</span></td>
+            <td><span style="font-weight: 600; color: var(--text);">${escapeHtml(div.display_name)}</span></td>
+        </tr>
+        `;
+    });
+
+    updateDivisionSortIcons();
+}
+
+/** Renders loading error message inside division list container. */
+function renderDivisionsError(message) {
+    const tbody = document.getElementById("divisionListBody");
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="empty-state">${message}</td>
+            </tr>
+        `;
+    }
+}
+
+/** Updates sorting column indicator icons. */
+function updateDivisionSortIcons() {
+    const table = document.getElementById("divisionTable");
+    if (!table) return;
+
+    table.querySelectorAll(".sort-icon").forEach(icon => {
+        icon.className = "sort-icon";
+    });
+
+    table.querySelectorAll("th.sortable").forEach(th => {
+        th.classList.remove("active-asc", "active-desc");
+    });
+
+    const activeIcon = document.getElementById(`sort-icon-division-${divisionSortKey}`);
+    if (activeIcon) activeIcon.classList.add(divisionSortDirection);
+
+    const activeHeader = table.querySelector(`th[data-key="${divisionSortKey}"]`);
+    if (activeHeader) activeHeader.classList.add(`active-${divisionSortDirection}`);
+}
+
+/** Page index navigator function. */
+function changeDivisionPage(delta) {
+    const totalPages = Math.max(1, Math.ceil(filteredDivisionData.length / divisionRowsPerPage));
+    const newPage = divisionCurrentPage + delta;
+    if (newPage >= 1 && newPage <= totalPages) {
+        divisionCurrentPage = newPage;
+        renderDivisionsTable();
+    }
+}
+
+/** Row limit display selector handler. */
+function changeDivisionRowsPerPage() {
+    const selectEl = document.getElementById("divisionRowsPerPage");
+    if (selectEl) {
+        divisionRowsPerPage = parseInt(selectEl.value);
+    }
+    divisionCurrentPage = 1;
+    renderDivisionsTable();
+}
+
+/** Sets UI highlighed row state for clicked division rows. */
+function selectDivisionRow(id, rowElement) {
+    const tbody = document.getElementById("divisionListBody");
+    if (tbody) {
+        tbody.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+    }
+    rowElement.classList.add("selected");
+    selectedDivisionId = id;
+
+    const div = allDivisionData.find(d => d.id === id);
+    const isSystemCritical = div && (div.name === "sadmin" || div.name === "lobby");
+
+    const editBtn = document.getElementById("editDivisionBtn");
+    const deleteBtn = document.getElementById("deleteDivisionBtn");
+    if (editBtn) editBtn.disabled = false;
+    if (deleteBtn) deleteBtn.disabled = isSystemCritical;
+}
+
+/** Clears selected highlights and disables actions on division selection. */
+function clearDivisionSelection() {
+    selectedDivisionId = null;
+    const editBtn = document.getElementById("editDivisionBtn");
+    const deleteBtn = document.getElementById("deleteDivisionBtn");
+    if (editBtn) editBtn.disabled = true;
+    if (deleteBtn) deleteBtn.disabled = true;
+
+    const tbody = document.getElementById("divisionListBody");
+    if (tbody) {
+        tbody.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+    }
+}
+
+/** Sends new division registration query. */
+async function registerNewDivision(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("divCode").value.trim().toLowerCase();
+    const displayName = document.getElementById("divDisplayName").value.trim();
+
+    const payload = {
+        name: name,
+        display_name: displayName
+    };
+
+    try {
+        const response = await fetch("../api/divisions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.detail || "Failed to add division."));
+            return;
+        }
+
+        document.getElementById("divisionAddForm").reset();
+        alert(`Division ${displayName} added successfully!`);
+        closeModal('divisionAddModal');
+        await loadDivisions(true);
+    } catch (error) {
+        console.error("Error adding division:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+/** Opens update details modal filled with active division properties. */
+function openDivisionEditModal() {
+    if (selectedDivisionId === null) return;
+    const div = allDivisionData.find(d => d.id === selectedDivisionId);
+    if (!div) return;
+
+    document.getElementById("editDivId").value = div.id;
+    document.getElementById("editDivCode").value = div.name;
+    document.getElementById("editDivDisplayName").value = div.display_name;
+    document.getElementById("divisionEditModal").style.display = "flex";
+}
+
+/** Sends update query changes. */
+async function editExistingDivision(event) {
+    event.preventDefault();
+    const id = document.getElementById("editDivId").value;
+    const name = document.getElementById("editDivCode").value.trim().toLowerCase();
+    const displayName = document.getElementById("editDivDisplayName").value.trim();
+
+    const payload = {
+        name: name,
+        display_name: displayName
+    };
+
+    try {
+        const response = await fetch(`../api/divisions/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.detail || "Failed to update division."));
+            return;
+        }
+
+        alert(`Division ${displayName} updated successfully!`);
+        closeModal('divisionEditModal');
+        await loadDivisions(false);
+        clearDivisionSelection();
+    } catch (error) {
+        console.error("Error updating division:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
+/** Opens delete confirmation prompt. */
+function openDivisionDeleteModal() {
+    if (selectedDivisionId === null) return;
+    const div = allDivisionData.find(d => d.id === selectedDivisionId);
+    if (!div) return;
+
+    if (div.name === "sadmin" || div.name === "lobby") {
+        alert("Cannot delete system-critical divisions.");
+        return;
+    }
+
+    document.getElementById("deleteDivId").value = div.id;
+    document.getElementById("deleteDivName").textContent = div.display_name;
+    document.getElementById("divisionDeleteModal").style.display = "flex";
+}
+
+/** Sends delete query request. */
+async function deleteSelectedDivision() {
+    const id = document.getElementById("deleteDivId").value;
+
+    try {
+        const response = await fetch(`../api/divisions/${id}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.detail || "Failed to delete division."));
+            return;
+        }
+
+        alert("Division deleted successfully!");
+        closeModal('divisionDeleteModal');
+        await loadDivisions(true);
+        clearDivisionSelection();
+    } catch (error) {
+        console.error("Error deleting division:", error);
+        alert("Failed to connect to the server.");
+    }
+}
+
