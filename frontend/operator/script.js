@@ -443,6 +443,18 @@ async function loadStatistics(period = "today") {
     }
 }
 
+function resetStatisticsFilters() {
+    currentRange = "today";
+    filterButtons.forEach(btn => {
+        btn.classList.remove("active");
+        if (btn.dataset.range === "today") {
+            btn.classList.add("active");
+        }
+    });
+
+    loadStatistics(currentRange);
+}
+
 /** Renders statistics data bars for performance charts. */
 function renderChart(data) {
     const tooltip = document.getElementById("chartTooltip");
@@ -868,7 +880,7 @@ function renderQueueTable() {
         `;
     });
 
-    document.querySelectorAll(".table-shell tbody tr").forEach((row, index) => {
+    body.querySelectorAll("tr").forEach((row, index) => {
         row.cells[0].textContent = index + 1;
     });
 
@@ -879,7 +891,8 @@ function renderQueueTable() {
 function renderQueueError(message) {
     document.getElementById("queueBody").innerHTML = `
         <tr>
-            <td colspan="10" class="empty-state">${message}</td>
+        // Joeffrey Broke This
+            <td colspan="10" class="empty-state">${messag}</td>
         </tr>
     `;
 }
@@ -1465,6 +1478,7 @@ function renderUsersTable() {
         return;
     }
 
+    let userRowsHtml = "";
     pageData.forEach((user, index) => {
         const divClass = user.division ? user.division.toLowerCase().replace(/\s/g, '') : 'default';
         const formattedDate = user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A';
@@ -1473,9 +1487,9 @@ function renderUsersTable() {
         const statusClass = user.status.toLowerCase() === "online" ? "status-online" : "status-offline";
         const lastSeenDate = user.last_seen ? new Date(user.last_seen).toLocaleString() : 'N/A';
 
-        els.tableBody.innerHTML += `
+        userRowsHtml += `
         <tr class="${isSelected ? 'selected' : ''}" onclick="selectUserRow(${user.id}, this)">
-            <td>${startIdx + index + 1}</td>
+            <td>${index + 1}</td>
             <td><span class="status-badge ${statusClass}">${status}</span></td>
             <td>
                 <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left;">
@@ -1490,6 +1504,7 @@ function renderUsersTable() {
         `;
     });
 
+    els.tableBody.innerHTML = userRowsHtml;
     updateUserSortIcons();
 }
 
@@ -1977,7 +1992,19 @@ function populateDivisionDropdowns(divisions) {
         defaultOpt.textContent = cfg.defaultText;
         el.appendChild(defaultOpt);
 
-        divisions.forEach(div => {
+        if (cfg.id === "division" || cfg.id === "filterDivision") {
+            filteredDivisions = divisions.filter(
+                div => !["smd", "lobby", "sadmin"].includes(div.name)
+            );
+        } else if (
+            ["regDivision", "editDivision", "userDivisionFilter"].includes(cfg.id)
+        ) {
+            filteredDivisions = divisions.filter(
+                div => !["r-smd", "sr-smd"].includes(div.name)
+            );
+        }
+
+        filteredDivisions.forEach(div => {
             const opt = document.createElement("option");
             opt.value = div.name;
             opt.textContent = div.display_name;
@@ -2110,19 +2137,21 @@ function renderDivisionsTable() {
         return;
     }
 
+    let divisionRowsHtml = "";
     pageData.forEach((div, index) => {
         const isSelected = selectedDivisionId === div.id;
         const divClass = div.name.toLowerCase().replace(/\s/g, '');
 
-        tbody.innerHTML += `
+        divisionRowsHtml += `
         <tr class="${isSelected ? 'selected' : ''}" onclick="selectDivisionRow(${div.id}, this)">
-            <td>${startIdx + index + 1}</td>
+            <td>${index + 1}</td>
             <td><span class="div-badge ${divClass}">${escapeHtml(div.name.toUpperCase())}</span></td>
             <td><span style="font-weight: 600; color: var(--text);">${escapeHtml(div.display_name)}</span></td>
         </tr>
         `;
     });
 
+    tbody.innerHTML = divisionRowsHtml;
     updateDivisionSortIcons();
 }
 
