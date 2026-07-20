@@ -294,12 +294,12 @@
             </div>
         </div>
 
-        <div class="table-shell user">
+        <div class="table-shell division">
             <table id="divisionTable">
                 <thead>
                     <tr>
-                        <th style="width: 10%">No.</th>
-                        <th class="sortable" style="width: 40%" data-key="name" onclick="sortDivisionsBy('name')">Division Code 
+                        <th style="width: 20%">No.</th>
+                        <th class="sortable" style="width: 30%" data-key="name" onclick="sortDivisionsBy('name')">Division Code 
                             <span class="sort-icon" id="sort-icon-division-name"></span></th>
                         <th class="sortable" style="width: 50%" data-key="display_name" onclick="sortDivisionsBy('display_name')">Display Name 
                             <span class="sort-icon" id="sort-icon-division-display_name"></span></th>
@@ -784,9 +784,9 @@
                     <button type="button" class="clear-btn" onclick="clearField('divDisplayName')">✕</button>
                 </div>
             </div>
-            <div class="modal-buttons">
+            <div class="modal-actions">
                 <button type="submit" class="save-btn">Save</button>
-                <button type="button" class="close-btn-style" onclick="closeModal('divisionAddModal')">Cancel</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('divisionAddModal')">Cancel</button>
             </div>
         </form>
     </div>
@@ -812,9 +812,9 @@
                     <button type="button" class="clear-btn" onclick="clearField('editDivDisplayName')">✕</button>
                 </div>
             </div>
-            <div class="modal-buttons">
+            <div class="modal-actions">
                 <button type="submit" class="save-btn">Save Changes</button>
-                <button type="button" class="close-btn-style" onclick="closeModal('divisionEditModal')">Cancel</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('divisionEditModal')">Cancel</button>
             </div>
         </form>
     </div>
@@ -825,11 +825,18 @@
     <div class="modal-content delete-modal-content">
         <h2>Confirm Deletion</h2>
         <input type="hidden" id="deleteDivId">
-        <p>Are you sure you want to delete the division <strong id="deleteDivName"></strong>?</p>
-        <p class="warning-text">This will permanently remove this division from the selection lists.</p>
-        <div class="modal-buttons">
+        <p class="delete-warning">
+            <span class="primary-warning">
+                Are you sure you want to delete the division <strong id="deleteDivName"></strong>?
+            </span>
+            <br>
+            <span class="secondary-warning">
+                This will permanently remove this division from the selection lists.            
+            </span>
+        </p>
+        <div class="modal-actions">
             <button class="delete-btn" onclick="deleteSelectedDivision()">Delete</button>
-            <button class="close-btn-style" onclick="closeModal('divisionDeleteModal')">Cancel</button>
+            <button class="cancel-btn" onclick="closeModal('divisionDeleteModal')">Cancel</button>
         </div>
     </div>
 </div>

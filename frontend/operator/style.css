@@ -807,6 +807,7 @@ tr.selected {
 
 label {
     display: block;
+    margin-top: 7px;
     margin-bottom: 7px;
     color: #344054;
     font-size: 0.88rem;
@@ -1382,7 +1383,7 @@ textarea {
 }
 
 .pagination-right button {
-    width: 100%;
+    width: max-content;
 }
 
 #userPageInfo,
@@ -1395,6 +1396,7 @@ textarea {
 }
 
 .pagination select {
+    width: auto;
     padding: 8px 12px;
     border: 1px solid var(--line);
     border-radius: var(--radius);
