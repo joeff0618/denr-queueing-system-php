@@ -35,13 +35,13 @@ You can run the application locally using PHP's built-in web server. A custom `r
 ### Option A: Local-Only Mode (Testing on the same machine)
 To run the server listening only to requests originating from your computer:
 ```bash
-php -S localhost:8001 router.php
+php -S localhost:8000 router.php
 ```
 Open your browser and navigate to:
-* **Client Kiosk**: `http://localhost:8001/client/index.html`
-* **TV Display**: `http://localhost:8001/tv/index.html`
-* **Operator Panel**: `http://localhost:8001/login/auth.html`
-* **Monitoring Panel**: `http://localhost:8001/login/auth.html`
+* **Client Kiosk**: `http://localhost:8000/client/index.html`
+* **TV Display**: `http://localhost:8000/tv/index.html`
+* **Operator Panel**: `http://localhost:8000/login/auth.html`
+* **Monitoring Panel**: `http://localhost:8000/login/auth.html`
 
 ---
 
@@ -51,12 +51,12 @@ To access and test the queue system on external devices (like smartphones, table
 1. Find your host computer's local IP address (e.g. `10.100.42.128` or `192.168.1.X`).
 2. Start the PHP server bound to all interfaces (`0.0.0.0`):
    ```bash
-   php -S 0.0.0.0:8001 router.php
+   php -S 0.0.0.0:8000 router.php
    ```
 3. Open a browser on any device connected to the same local network and enter:
-   * **Client Kiosk**: `http://<your-local-ip>:8001/client/index.html`
-   * **TV Display**: `http://<your-local-ip>:8001/tv/index.html`
-   * **Operator Panel**: `http://<your-local-ip>:8001/login/auth.html`
+   * **Client Kiosk**: `http://<your-local-ip>:8000/client/index.html`
+   * **TV Display**: `http://<your-local-ip>:8000/tv/index.html`
+   * **Operator Panel**: `http://<your-local-ip>:8000/login/auth.html`
 
 ---
 
