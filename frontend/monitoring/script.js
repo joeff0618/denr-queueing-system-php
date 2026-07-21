@@ -237,19 +237,19 @@ function updateMonitoringDashboard() {
             // Clicking the selected button deselects it
             if (selectedEntryId === item.id) {
                 selectedEntryId = null;
+                currentEntryId = null;
                 currentQueueNumber = null;
 
+                document.querySelectorAll(".queue-number").forEach(b => b.classList.remove("active"));
+                document.querySelectorAll(".table-shell tbody tr").forEach(r => r.classList.remove("selected"));
                 document.getElementById("completeBtn").disabled = true;
                 document.getElementById("returnBtn").disabled = true;
-                btn.classList.remove("active");
+                document.getElementById("editEntryBtn").disabled = true;
+                document.getElementById("transferEntryBtn").disabled = true;
             } else {
                 selectedEntryId = item.id;
+                currentEntryId = item.id;
                 currentQueueNumber = item.queue_no;
-
-                document.querySelectorAll(".queue-number").forEach(b => b.classList.remove("active"));
-                document.getElementById("completeBtn").disabled = false;
-                document.getElementById("returnBtn").disabled = false;
-                btn.classList.add("active");
             }
 
             // Keep the table selection in sync with the number-grid selection
@@ -539,6 +539,7 @@ function renderTable() {
             row.cells[8].textContent = formatDatetime(item.completed_at);
 
             row.classList.toggle('priority-row', isPriority);
+            if (item.id === selectedEntryId) selectRow(item.id, row);
         });
 
         // Remove rows not on current page
@@ -950,8 +951,9 @@ async function updateCurrent(newStatus) {
 /** Closes the designated popup window. */
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = "none";
-    if (modalId === 'forwardedAnnouncementModal') {
-        window.speechSynthesis.cancel();
+    if (modalId === 'forwardedAnnouncementModal') window.speechSynthesis.cancel();
+    if (modalId === 'editEntryModal' || modalId === 'transferEntryModal') {
+        document.querySelectorAll(".table-shell tbody tr").forEach(r => r.classList.remove("selected"));
     }
 }
 
