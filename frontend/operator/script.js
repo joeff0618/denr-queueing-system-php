@@ -373,6 +373,7 @@ function syncPanelButtonsForSelection() {
 function openModal(modalId) {
     document.getElementById(modalId).style.display = "flex";
     if(modalId === "statsModal") resetStatisticsFilters();
+    if(modalId === "filterModal") toggleFilterDateRange();
 }
 
 /** Closes the specified dialog overlay. */
@@ -617,9 +618,42 @@ filterButtons.forEach(btn => {
 /* ================= LOAD QUEUE ================= */
 
 /** Fetches the latest queue status data list from the server. */
+/** Toggles filter date range input fields based on Today Only checkbox. */
+function toggleFilterDateRange() {
+    const todayChecked = document.getElementById("filterTodayOnly") ? document.getElementById("filterTodayOnly").checked : true;
+    const dateRange = document.getElementById("filterDateRange");
+    if (!dateRange) return;
+
+    if (todayChecked) {
+        dateRange.classList.add("hidden");
+    } else {
+        dateRange.classList.remove("hidden");
+    }
+}
+
+/** Fetches the latest queue status data list from the server. */
 async function loadQueue(){
     try {
-        const response = await fetch(`${API_BASE}/today`);
+        const filterTodayEl = document.getElementById("filterTodayOnly");
+        const todayOnly = filterTodayEl ? filterTodayEl.checked : true;
+        let url;
+
+        if (todayOnly) {
+            url = `${API_BASE}/today`;
+        } else {
+            const dateFrom = document.getElementById("filterStartDatetime")?.value || "";
+            const dateTo = document.getElementById("filterEndDatetime")?.value || "";
+            let params = [];
+            if (dateFrom) params.push(`date_from=${encodeURIComponent(dateFrom)}`);
+            if (dateTo) params.push(`date_to=${encodeURIComponent(dateTo)}`);
+
+            url = `${API_BASE}/all`;
+            if (params.length > 0) {
+                url += `?${params.join("&")}`;
+            }
+        }
+
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Request failed: ${response.status} ${response.statusText}`);
         }
@@ -634,7 +668,7 @@ async function loadQueue(){
         updateOperatorDashboard();
         updateOperatorLastUpdated();
         applyQueueFilters();
-        applyDepartmentAccess()
+        applyDepartmentAccess();
 
     } catch (error) {
         console.error("Error loading queue:", error);
@@ -662,13 +696,22 @@ function applyQueueFilters() {
     const div = document.getElementById("filterDivision")?.value.toLowerCase() || "";
     const priorityFilter = document.getElementById("filterPriority")?.value || ""; // "priority" or "regular" or ""
     const statusFilter = document.getElementById("filterStatus")?.value.toLowerCase() || "";
+    const todayOnly = document.getElementById("filterTodayOnly") ? document.getElementById("filterTodayOnly").checked : true;
     const startDatetimeVal = document.getElementById("filterStartDatetime")?.value || "";
     const endDatetimeVal = document.getElementById("filterEndDatetime")?.value || "";
 
     const hideCompleted = document.getElementById("hideCompleted")?.checked;
 
-    const startTime = startDatetimeVal ? new Date(startDatetimeVal).getTime() : null;
-    const endTime = endDatetimeVal ? new Date(endDatetimeVal).getTime() : null;
+    let startTime = null;
+    let endTime = null;
+    if (!todayOnly) {
+        if (startDatetimeVal) {
+            startTime = new Date(startDatetimeVal + "T00:00:00").getTime();
+        }
+        if (endDatetimeVal) {
+            endTime = new Date(endDatetimeVal + "T23:59:59").getTime();
+        }
+    }
 
     filteredQueueData = allQueueData.filter(item => {
         // Search text match
@@ -678,7 +721,7 @@ function applyQueueFilters() {
         // Division match (if "smd" is chosen, match smd, r-smd, and sr-smd)
         let matchDiv = true;
         if (div) {
-            const itemDiv = item.division.toLowerCase();
+            const itemDiv = (item.division || "").toLowerCase();
             if (div === 'smd') {
                 matchDiv = (itemDiv === 'smd' || itemDiv === 'r-smd' || itemDiv === 'sr-smd');
             } else {
@@ -695,19 +738,22 @@ function applyQueueFilters() {
         }
 
         // Status match
-        const matchStatus = !statusFilter || item.status.toLowerCase() === statusFilter;
+        const matchStatus = !statusFilter || (item.status || "").toLowerCase() === statusFilter;
 
         // Hide completed toggle override
-        const filterCompleted = statusFilter === "completed" || !hideCompleted || item.status.toLowerCase() !== "completed";
+        const filterCompleted = statusFilter === "completed" || !hideCompleted || (item.status || "").toLowerCase() !== "completed";
 
-        // Datetime range match
+        // Datetime range match (when todayOnly is false and dates are specified)
         let matchTime = true;
-        if (item.created_at) {
-            const itemTime = new Date(item.created_at).getTime();
-            if (startTime && itemTime < startTime) matchTime = false;
-            if (endTime && itemTime > endTime) matchTime = false;
-        } else if (startTime || endTime) {
-            matchTime = false;
+        if (!todayOnly && (startTime || endTime)) {
+            if (item.created_at) {
+                const formattedStr = item.created_at.replace(" ", "T");
+                const itemTime = new Date(formattedStr).getTime();
+                if (startTime && itemTime < startTime) matchTime = false;
+                if (endTime && itemTime > endTime) matchTime = false;
+            } else {
+                matchTime = false;
+            }
         }
 
         return matchSearch && matchDiv && matchPriority && matchStatus && filterCompleted && matchTime;
@@ -718,21 +764,23 @@ function applyQueueFilters() {
 }
 
 /** Applies active filters from the filters modal dialog. */
-function applyFilterModal() {
-    applyQueueFilters();
+async function applyFilterModal() {
+    await loadQueue();
     closeModal('filterModal');
     updateFilterButtonActiveState();
 }
 
 /** Resets all active table filters to default. */
-function clearFilters() {
+async function clearFilters() {
     if (document.getElementById("filterDivision")) document.getElementById("filterDivision").value = "";
     if (document.getElementById("filterPriority")) document.getElementById("filterPriority").value = "";
     if (document.getElementById("filterStatus")) document.getElementById("filterStatus").value = "";
+    if (document.getElementById("filterTodayOnly")) document.getElementById("filterTodayOnly").checked = true;
     if (document.getElementById("filterStartDatetime")) document.getElementById("filterStartDatetime").value = "";
     if (document.getElementById("filterEndDatetime")) document.getElementById("filterEndDatetime").value = "";
     
-    applyQueueFilters();
+    toggleFilterDateRange();
+    await loadQueue();
     updateFilterButtonActiveState();
     closeModal('filterModal');
 }
@@ -745,10 +793,11 @@ function updateFilterButtonActiveState() {
     const div = document.getElementById("filterDivision")?.value || "";
     const priority = document.getElementById("filterPriority")?.value || "";
     const status = document.getElementById("filterStatus")?.value || "";
+    const todayOnly = document.getElementById("filterTodayOnly") ? document.getElementById("filterTodayOnly").checked : true;
     const start = document.getElementById("filterStartDatetime")?.value || "";
     const end = document.getElementById("filterEndDatetime")?.value || "";
     
-    const isFiltering = (div || priority || status || start || end);
+    const isFiltering = (div || priority || status || !todayOnly || start || end);
     
     if (isFiltering) {
         btn.classList.add("active");

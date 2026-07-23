@@ -9,10 +9,8 @@ if ($method === 'GET' && $action === 'test') {
 }
 
 if ($method === 'GET' && $action === 'available-cards') {
-    $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items 
-        WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "') 
-        AND queue_no IS NOT NULL");
-    $used = array_map('intval', array_column($stmt->fetchAll(), 'queue_no'));
+    $cooldown = (int) ($config['card_cooldown_minutes'] ?? 5);
+    $used = get_used_cards($pdo, $cooldown);
     $all = range(1, (int) $config['max_available_cards']);
     respond(['available_cards' => array_values(array_diff($all, $used))]);
 }
@@ -20,12 +18,10 @@ if ($method === 'GET' && $action === 'available-cards') {
 if ($method === 'POST' && $action === 'add') {
     $body = json_body();
     $queueNo = (int) ($body['queue_no'] ?? 0);
-    $stmt = $pdo->query("SELECT queue_no FROM queueing_queue_items 
-        WHERE LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "') 
-        AND queue_no IS NOT NULL");
-    $used = array_map('intval', array_column($stmt->fetchAll(), 'queue_no'));
+    $cooldown = (int) ($config['card_cooldown_minutes'] ?? 5);
+    $used = get_used_cards($pdo, $cooldown);
     if (!in_array($queueNo, range(1, (int) $config['max_available_cards']), true) || in_array($queueNo, $used, true)) {
-        fail(400, "Card #$queueNo is currently in use");
+        fail(400, "Card #$queueNo is currently in use or in cooldown");
     }
     $stmt = $pdo->prepare(
         'INSERT INTO queueing_queue_items (queue_no, client_name, purpose, status, division, priority, created_at, completed_at, skip_count)

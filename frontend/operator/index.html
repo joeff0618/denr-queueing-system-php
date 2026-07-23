@@ -732,14 +732,19 @@
                 </select>
             </div>
 
-            <div class="filter-date-range">
-                <div class="filter-date-field">
-                    <label for="filterStartDatetime">Start Date & Time</label>
-                    <input type="datetime-local" id="filterStartDatetime">
+            <label class="today-toggle modal-toggle">
+                <input type="checkbox" id="filterTodayOnly" checked onchange="toggleFilterDateRange()">
+                Today Only
+            </label>
+
+            <div class="csv-date-range hidden" id="filterDateRange">
+                <div class="csv-date-field">
+                    <label for="filterStartDatetime">From:</label>
+                    <input type="date" id="filterStartDatetime">
                 </div>
-                <div class="filter-date-field">
-                    <label for="filterEndDatetime">End Date & Time</label>
-                    <input type="datetime-local" id="filterEndDatetime">
+                <div class="csv-date-field">
+                    <label for="filterEndDatetime">To:</label>
+                    <input type="date" id="filterEndDatetime">
                 </div>
             </div>
 

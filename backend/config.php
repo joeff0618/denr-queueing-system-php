@@ -8,6 +8,7 @@ return [
     'db_pass' => 'password',
     'timezone' => 'Asia/Manila',
     'max_available_cards' => 30,
+    'card_cooldown_minutes' => 30, // Number of minutes a card stays unavailable after completion before being recycled
     'aging_rate' => 4.0,
     'priority_weights' => [
         'pwd' => 100,

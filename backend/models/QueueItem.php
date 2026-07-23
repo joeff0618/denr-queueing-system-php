@@ -22,6 +22,40 @@ function reset_past_cards(PDO $pdo): void
 }
 
 /**
+ * Retrieves list of physical card numbers (queue_no) currently active or in cooldown.
+ * 
+ * @param PDO $pdo PDO database connection.
+ * @param int $cooldownMinutes Cooldown duration in minutes after completion.
+ * @return int[] Array of active or cooldown queue numbers.
+ */
+function get_used_cards(PDO $pdo, int $cooldownMinutes = 5): array
+{
+    if ($cooldownMinutes > 0) {
+        $cutoff = date('Y-m-d H:i:s', time() - ($cooldownMinutes * 60));
+        $stmt = $pdo->prepare(
+            "SELECT queue_no FROM queueing_queue_items 
+             WHERE queue_no IS NOT NULL 
+               AND (
+                 LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "')
+                 OR (
+                     LOWER(status) IN ('" . Status::COMPLETED->value . "', '" . Status::DEFERRED->value . "')
+                     AND completed_at IS NOT NULL
+                     AND completed_at >= ?
+                 )
+               )"
+        );
+        $stmt->execute([$cutoff]);
+    } else {
+        $stmt = $pdo->query(
+            "SELECT queue_no FROM queueing_queue_items 
+             WHERE queue_no IS NOT NULL 
+               AND LOWER(status) IN ('" . Status::PENDING->value . "', '" . Status::PROCESSING->value . "', '" . Status::FORWARDED->value . "')"
+        );
+    }
+    return array_map('intval', array_column($stmt->fetchAll(), 'queue_no'));
+}
+
+/**
  * Retrieves a single queue item by its ID.
  * 
  * @param PDO $pdo PDO database connection.
