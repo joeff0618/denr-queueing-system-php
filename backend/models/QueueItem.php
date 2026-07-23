@@ -164,19 +164,34 @@ function queue_statistics(PDO $pdo, string $range, string $div): array
     if ($range === 'today') {
         $groupFormat = '%H:00';
         $end = $start->modify('+1 day');
+
     } elseif ($range === 'yesterday') {
         $groupFormat = '%H:00';
         $end = $start;
         $start = $start->modify('-1 day');
+
     } elseif ($range === '7days') {
         $start = $start->modify('-7 days');
         $end = $now;
+
     } elseif ($range === 'month') {
+        // Current month
         $start = $now->modify('first day of this month')->setTime(0, 0, 0);
         $end = $now->modify('first day of next month')->setTime(0, 0, 0);
+
+    } elseif (in_array($range, [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ], true)) {
+        // Selected month of the current year
+        $year = (int) $now->format('Y');
+        $start = (new DateTimeImmutable("first day of $range $year"))->setTime(0, 0, 0);
+        $end = $start->modify('first day of next month');
+
     } elseif ($range === 'year') {
         $groupFormat = '%Y-%m';
-        $start = $now->setDate((int) $now->format('Y'), 1, 1)->setTime(0, 0, 0);
+        $start = $now->setDate((int)$now->format('Y'), 1, 1)->setTime(0, 0, 0);
+
     } else {
         return ['data' => []];
     }

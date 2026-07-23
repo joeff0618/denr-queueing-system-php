@@ -706,7 +706,8 @@ async function downloadCsv() {
 /** Opens the statistics analytics window. */
 function openStatisticsModal() {
     loadStatistics("today");
-    document.getElementById("statsModal").classList.remove("hidden");    
+    document.getElementById("statsModal").classList.remove("hidden");  
+    resetStatisticsFilters();  
 }
 
 /** Closes the statistics analytics window. */
@@ -730,6 +731,18 @@ async function loadStatistics(period = "today") {
   } catch (error) {
     console.error("Error loading statistics:", error);
   }
+}
+
+function resetStatisticsFilters() {
+    currentRange = "today";
+    filterButtons.forEach(btn => {
+        btn.classList.remove("active");
+        if (btn.dataset.range === "today") {
+            btn.classList.add("active");
+        }
+    });
+    monthDropdown.value = "";
+    loadStatistics(currentRange);
 }
 
 /** Builds dynamic SVG bar charts displaying daily or monthly processing history. */
@@ -881,16 +894,27 @@ function formatLabel(dateStr, range) {
 
 let currentRange = "today";
 const filterButtons = document.querySelectorAll(".filter-btn");
+const monthDropdown = document.getElementById('monthDropdown');
 
 filterButtons.forEach(btn => {
     btn.addEventListener("click", () => {
         currentRange = btn.dataset.range;
         filterButtons.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-
+        if (monthDropdown) {
+            monthDropdown.value = "";
+        }
         loadStatistics(currentRange);
     });
 });
+
+if (monthDropdown) {
+    monthDropdown.addEventListener("change", function () {
+        currentRange = this.value;
+        filterButtons.forEach(b => b.classList.remove("active"));
+        loadStatistics(currentRange);
+    });
+}
 
 /* ================= LOGOUT MODAL ================= */
 /** Opens the logout confirmation popup. */
@@ -955,6 +979,7 @@ function closeModal(modalId) {
     if (modalId === 'editEntryModal' || modalId === 'transferEntryModal') {
         document.querySelectorAll(".table-shell tbody tr").forEach(r => r.classList.remove("selected"));
     }
+    if(modalId === "statsModal") resetStatisticsFilters();
 }
 
 /** Toggles the clear button visibility for an input element depending on text entry. */

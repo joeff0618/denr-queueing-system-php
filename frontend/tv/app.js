@@ -33,6 +33,29 @@ function updateClock() {
     // Tracker for items that triggers the chime
     let chimedItems = new Set();
 
+// 1. Declare a global variable outside your functions to prevent garbage collection
+window.currentUtterance = null;
+
+function callQueue(item) {
+    // 2. Create the utterance immediately
+    window.currentUtterance = new SpeechSynthesisUtterance(`Number ${item.queue_no}, please proceed to the front desk.`);
+    
+    // 3. OSet explicit voice parameters for limited TV hardware
+    window.currentUtterance.rate = 1.0; 
+    window.currentUtterance.pitch = 1.0;
+
+    // 4. If you MUST use a delay, keep the global reference active
+    setTimeout(() => {
+        if (window.speechSynthesis) {
+            // Cancel any stuck audio queue first
+            window.speechSynthesis.cancel(); 
+            window.speechSynthesis.speak(window.currentUtterance);
+        } else {
+            console.error("TTS not supported on this Pensonic device.");
+        }
+    }, 3000);
+}
+
 /**
  * Updates the TV monitor dashboard displaying Now Serving and Coming Up Next information.
  * Handles chime playing and text-to-speech announcement of newly called queue items.
@@ -71,10 +94,7 @@ function updateDisplay(activeItems) {
             const audio = new Audio('../assets/sound/Announcement sound effect (128kbit_AAC).m4a');
             audio.play().catch(e => console.log(e));
 
-            setTimeout(() => {
-                const utterance = new SpeechSynthesisUtterance(`Number ${item.queue_no}, please proceed to the front desk.`);
-                window.speechSynthesis.speak(utterance);
-            }, 3000);
+            callQueue(item);
             chimedItems.add(item.id);
           }
         

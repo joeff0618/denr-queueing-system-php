@@ -436,7 +436,6 @@ async function loadStatistics(period = "today") {
         const url = `${API_BASE}/statistics/completed?range=${period}&div=${userDivision}`;
         const response = await fetch(url);
         const data = await response.json();
-
         renderChart(data.data);
         renderStatsTable(data.data);
     } catch (error) {
@@ -452,7 +451,7 @@ function resetStatisticsFilters() {
             btn.classList.add("active");
         }
     });
-
+    monthDropdown.value = "";
     loadStatistics(currentRange);
 }
 
@@ -605,15 +604,27 @@ function formatLabel(dateStr, range) {
 // Filter buttons
 let currentRange = "today";
 const filterButtons = document.querySelectorAll(".filter-btn");
+const monthDropdown = document.getElementById('monthDropdown');
 
 filterButtons.forEach(btn => {
     btn.addEventListener("click", () => {
         currentRange = btn.dataset.range;
         filterButtons.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
+        if (monthDropdown) {
+            monthDropdown.value = "";
+        }
         loadStatistics(currentRange);
     });
 });
+
+if (monthDropdown) {
+    monthDropdown.addEventListener("change", function () {
+        currentRange = this.value;
+        filterButtons.forEach(b => b.classList.remove("active"));
+        loadStatistics(currentRange);
+    });
+}
 
 /* ================= LOAD QUEUE ================= */
 

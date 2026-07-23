@@ -897,6 +897,31 @@ tr.priority-row td:first-child {
     overflow: hidden;
 }
 
+#monthDropdown {
+  width: 220px;
+  margin: 0 10px 0 auto;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#monthDropdown:hover {
+  border-color: #888;
+}
+
+#monthDropdown:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+#monthDropdown option {
+  font-size: 16px;
+}
+
 /* LEFT */
 .stats-left {
     min-width: 0;
@@ -1043,18 +1068,6 @@ tr.priority-row td:first-child {
 
 .pending-bar {
     background: #FFE5B4;
-}
-
-.chart-stack .chart-bar:last-child {
-    border-radius: 6px 6px 0 0;
-}
-
-.chart-stack .chart-bar:first-child {
-    border-radius: 0 0 6px 6px;
-}
-
-.chart-stack .chart-bar:only-child {
-    border-radius: 6px 6px 0 0;
 }
 
 /* X-axis labels */

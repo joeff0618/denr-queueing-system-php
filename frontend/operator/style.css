@@ -454,7 +454,6 @@ select {
     height: 500px;
 }
 
-
 table {
     display: block;
     width: 100%;
@@ -942,6 +941,31 @@ textarea {
     gap: 20px;
     padding: 20px;
     overflow: hidden;
+}
+
+#monthDropdown {
+  width: 220px;
+  margin: 0 10px 0 auto;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#monthDropdown:hover {
+  border-color: #888;
+}
+
+#monthDropdown:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+#monthDropdown option {
+  font-size: 16px;
 }
 
 /* LEFT */
